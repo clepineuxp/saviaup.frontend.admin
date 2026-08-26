@@ -4,6 +4,7 @@ import {
   DashboardSnapshot,
   OrganizationDetail,
   OrganizationOperation,
+  OperationStatusSettings,
   OrganizationSummary,
   PasswordResetResult,
   PlanAssignmentResult,
@@ -13,6 +14,7 @@ import {
   PlatformUser,
   ReassignMembershipRequest,
   SavePlanRequest,
+  UpdateOperationStatusSettingsRequest,
 } from '../models/admin.models';
 
 export interface AdminRepository {
@@ -21,6 +23,10 @@ export interface AdminRepository {
   getOrganizations(): Observable<readonly OrganizationSummary[]>;
   getOrganization(id: string): Observable<OrganizationDetail>;
   getOperations(): Observable<readonly OrganizationOperation[]>;
+  getOperationStatusSettings(): Observable<OperationStatusSettings>;
+  updateOperationStatusSettings(
+    request: UpdateOperationStatusSettingsRequest,
+  ): Observable<OperationStatusSettings>;
   getPlans(): Observable<readonly PlatformPlan[]>;
   getPlan(id: string): Observable<PlanDetail>;
   getPlanPermissionCatalog(): Observable<readonly PlanPermissionOption[]>;

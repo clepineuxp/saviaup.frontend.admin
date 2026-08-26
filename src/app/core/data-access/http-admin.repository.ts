@@ -6,6 +6,7 @@ import {
   DashboardSnapshot,
   OrganizationDetail,
   OrganizationOperation,
+  OperationStatusSettings,
   OrganizationSummary,
   PasswordResetResult,
   PlanAssignmentResult,
@@ -15,6 +16,7 @@ import {
   PlatformUser,
   ReassignMembershipRequest,
   SavePlanRequest,
+  UpdateOperationStatusSettingsRequest,
 } from '../models/admin.models';
 import { AdminRepository } from './admin.repository';
 
@@ -41,6 +43,16 @@ export class HttpAdminRepository implements AdminRepository {
 
   getOperations(): Observable<readonly OrganizationOperation[]> {
     return this.http.get<readonly OrganizationOperation[]>(`${this.baseUrl}/operations`);
+  }
+
+  getOperationStatusSettings(): Observable<OperationStatusSettings> {
+    return this.http.get<OperationStatusSettings>(`${this.baseUrl}/operations/settings`);
+  }
+
+  updateOperationStatusSettings(
+    request: UpdateOperationStatusSettingsRequest,
+  ): Observable<OperationStatusSettings> {
+    return this.http.put<OperationStatusSettings>(`${this.baseUrl}/operations/settings`, request);
   }
 
   getPlans(): Observable<readonly PlatformPlan[]> {

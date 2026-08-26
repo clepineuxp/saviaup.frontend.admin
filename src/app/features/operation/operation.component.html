@@ -7,16 +7,148 @@
         Valida el flujo desde la apertura de caja hasta la última orden procesada.
       </p>
     </div>
-    <button
-      class="button button--secondary"
-      type="button"
-      [disabled]="store.isLoading()"
-      (click)="refresh()"
-    >
-      <app-icon name="refresh" />
-      Actualizar datos
-    </button>
+    <div class="page-header__actions">
+      <button class="button button--secondary" type="button" (click)="toggleSettings()">
+        <app-icon name="activity" />
+        Configurar estados
+      </button>
+      <button
+        class="button button--secondary"
+        type="button"
+        [disabled]="store.isLoading()"
+        (click)="refresh()"
+      >
+        <app-icon name="refresh" />
+        Actualizar datos
+      </button>
+    </div>
   </header>
+
+  @if (settingsOpen()) {
+    <section class="card status-settings" aria-labelledby="status-settings-title">
+      <header class="card__header">
+        <div>
+          <p class="eyebrow">Política global</p>
+          <h2 id="status-settings-title" class="card__title">Reglas de estado operacional</h2>
+          <p class="card__subtitle">
+            Define qué situaciones generan atención o un estado crítico en las organizaciones.
+          </p>
+        </div>
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="Cerrar configuración"
+          (click)="toggleSettings()"
+        >
+          <app-icon name="x" />
+        </button>
+      </header>
+
+      <div class="status-settings__rules">
+        <article class="status-rule">
+          <div class="status-rule__heading">
+            <div>
+              <strong>Inactividad de órdenes</strong>
+              <p>Genera un hallazgo cuando una organización deja de registrar órdenes.</p>
+            </div>
+            <button
+              class="switch"
+              type="button"
+              role="switch"
+              aria-label="Activar regla de inactividad"
+              [attr.aria-checked]="inactivityRuleEnabled()"
+              [class.switch--checked]="inactivityRuleEnabled()"
+              (click)="toggleInactivityRule()"
+            ></button>
+          </div>
+          <div
+            class="status-rule__fields"
+            [class.status-rule__fields--disabled]="!inactivityRuleEnabled()"
+          >
+            <label class="field">
+              <span class="field__label">Tiempo sin actividad</span>
+              <div class="number-field">
+                <input
+                  class="field__input"
+                  type="number"
+                  min="1"
+                  max="10080"
+                  [disabled]="!inactivityRuleEnabled()"
+                  [value]="inactivityThresholdMinutes()"
+                  (input)="setInactivityThreshold($event)"
+                />
+                <span>minutos</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field__label">Estado generado</span>
+              <select
+                class="field__input"
+                [disabled]="!inactivityRuleEnabled()"
+                [value]="inactivitySeverity()"
+                (change)="setInactivitySeverity($event)"
+              >
+                <option value="WARNING">Atención</option>
+                <option value="CRITICAL">Crítico</option>
+              </select>
+            </label>
+          </div>
+        </article>
+
+        <article class="status-rule">
+          <div class="status-rule__heading">
+            <div>
+              <strong>Caja requerida cerrada</strong>
+              <p>Evalúa organizaciones configuradas para exigir una caja abierta.</p>
+            </div>
+            <button
+              class="switch"
+              type="button"
+              role="switch"
+              aria-label="Activar regla de caja"
+              [attr.aria-checked]="cashRegisterRuleEnabled()"
+              [class.switch--checked]="cashRegisterRuleEnabled()"
+              (click)="toggleCashRegisterRule()"
+            ></button>
+          </div>
+          <div
+            class="status-rule__fields status-rule__fields--single"
+            [class.status-rule__fields--disabled]="!cashRegisterRuleEnabled()"
+          >
+            <label class="field">
+              <span class="field__label">Estado generado</span>
+              <select
+                class="field__input"
+                [disabled]="!cashRegisterRuleEnabled()"
+                [value]="cashRegisterSeverity()"
+                (change)="setCashRegisterSeverity($event)"
+              >
+                <option value="WARNING">Atención</option>
+                <option value="CRITICAL">Crítico</option>
+              </select>
+            </label>
+          </div>
+        </article>
+      </div>
+
+      <footer class="status-settings__footer">
+        <span>El cambio se aplica al siguiente cálculo de operación.</span>
+        <div>
+          <button class="button button--ghost" type="button" (click)="toggleSettings()">
+            Cancelar
+          </button>
+          <button
+            class="button button--primary"
+            type="button"
+            [disabled]="store.pendingAction() === 'operation-settings'"
+            (click)="saveSettings()"
+          >
+            Guardar reglas
+          </button>
+        </div>
+      </footer>
+    </section>
+  }
 
   <section class="operation-summary">
     <article>

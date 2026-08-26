@@ -114,6 +114,17 @@ export interface OrganizationOperation {
   readonly issues: readonly OperationIssue[];
 }
 
+export interface OperationStatusSettings {
+  readonly inactivityRuleEnabled: boolean;
+  readonly inactivityThresholdMinutes: number;
+  readonly inactivitySeverity: OperationIssue['severity'];
+  readonly cashRegisterRuleEnabled: boolean;
+  readonly cashRegisterSeverity: OperationIssue['severity'];
+  readonly updatedAt: string | null;
+}
+
+export type UpdateOperationStatusSettingsRequest = Omit<OperationStatusSettings, 'updatedAt'>;
+
 export interface PlatformPlan {
   readonly id: string;
   readonly code: string;

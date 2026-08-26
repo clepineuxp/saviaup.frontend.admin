@@ -350,10 +350,14 @@
 }
 
 .permission-groups {
-  display: grid;
-  align-items: start;
-  gap: 0.9rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  columns: 2;
+  column-gap: 0.9rem;
+}
+
+.permission-group {
+  width: 100%;
+  margin: 0 0 0.9rem;
+  break-inside: avoid;
 }
 
 .permission-group__count {
@@ -503,7 +507,7 @@
   }
 
   .permission-groups {
-    grid-template-columns: 1fr;
+    columns: 1;
   }
 
   .operation-metrics {

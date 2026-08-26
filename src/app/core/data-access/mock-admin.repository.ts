@@ -6,6 +6,7 @@ import {
   OrganizationDetail,
   OrganizationMember,
   OrganizationOperation,
+  OperationStatusSettings,
   OrganizationSummary,
   PasswordResetResult,
   PlanAssignmentResult,
@@ -16,10 +17,20 @@ import {
   ReassignMembershipRequest,
   SavePlanRequest,
   TenantPermission,
+  UpdateOperationStatusSettingsRequest,
 } from '../models/admin.models';
 import { AdminRepository } from './admin.repository';
 
 const RESPONSE_DELAY = 220;
+
+let OPERATION_STATUS_SETTINGS: OperationStatusSettings = {
+  inactivityRuleEnabled: true,
+  inactivityThresholdMinutes: 120,
+  inactivitySeverity: 'CRITICAL',
+  cashRegisterRuleEnabled: true,
+  cashRegisterSeverity: 'WARNING',
+  updatedAt: null,
+};
 
 const PERMISSIONS: readonly Omit<TenantPermission, 'enabled'>[] = [
   {
@@ -648,6 +659,20 @@ export class MockAdminRepository implements AdminRepository {
 
   getOperations(): Observable<readonly OrganizationOperation[]> {
     return this.respond(OPERATIONS);
+  }
+
+  getOperationStatusSettings(): Observable<OperationStatusSettings> {
+    return this.respond(OPERATION_STATUS_SETTINGS);
+  }
+
+  updateOperationStatusSettings(
+    request: UpdateOperationStatusSettingsRequest,
+  ): Observable<OperationStatusSettings> {
+    OPERATION_STATUS_SETTINGS = {
+      ...request,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.respond(OPERATION_STATUS_SETTINGS);
   }
 
   getPlans(): Observable<readonly PlatformPlan[]> {

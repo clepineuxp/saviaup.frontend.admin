@@ -5,6 +5,7 @@ import {
   DashboardSnapshot,
   OrganizationDetail,
   OrganizationOperation,
+  OperationStatusSettings,
   OrganizationMember,
   OrganizationSummary,
   PlanDetail,
@@ -13,6 +14,7 @@ import {
   PlatformUser,
   ReassignMembershipRequest,
   SavePlanRequest,
+  UpdateOperationStatusSettingsRequest,
 } from '../models/admin.models';
 import { ADMIN_REPOSITORY } from '../data-access/admin.repository';
 
@@ -29,6 +31,7 @@ export class AdminStore {
   private readonly organizationsState = signal<readonly OrganizationSummary[]>([]);
   private readonly organizationState = signal<OrganizationDetail | null>(null);
   private readonly operationsState = signal<readonly OrganizationOperation[]>([]);
+  private readonly operationSettingsState = signal<OperationStatusSettings | null>(null);
   private readonly plansState = signal<readonly PlatformPlan[]>([]);
   private readonly planDetailState = signal<PlanDetail | null>(null);
   private readonly planPermissionCatalogState = signal<readonly PlanPermissionOption[]>([]);
@@ -42,6 +45,7 @@ export class AdminStore {
   readonly organizations = this.organizationsState.asReadonly();
   readonly organization = this.organizationState.asReadonly();
   readonly operations = this.operationsState.asReadonly();
+  readonly operationSettings = this.operationSettingsState.asReadonly();
   readonly plans = this.plansState.asReadonly();
   readonly planDetail = this.planDetailState.asReadonly();
   readonly planPermissionCatalog = this.planPermissionCatalogState.asReadonly();
@@ -75,6 +79,27 @@ export class AdminStore {
 
   async loadOperations(): Promise<void> {
     await this.load(() => firstValueFrom(this.repository.getOperations()), this.operationsState);
+  }
+
+  async loadOperationStatusSettings(): Promise<void> {
+    await this.load(
+      () => firstValueFrom(this.repository.getOperationStatusSettings()),
+      this.operationSettingsState,
+    );
+  }
+
+  async saveOperationStatusSettings(request: UpdateOperationStatusSettingsRequest): Promise<void> {
+    await this.action(
+      'operation-settings',
+      async () => {
+        const settings = await firstValueFrom(
+          this.repository.updateOperationStatusSettings(request),
+        );
+        this.operationSettingsState.set(settings);
+        this.operationsState.set(await firstValueFrom(this.repository.getOperations()));
+      },
+      'Las reglas de estado operacional fueron actualizadas.',
+    );
   }
 
   async loadPlans(): Promise<void> {

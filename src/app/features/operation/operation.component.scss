@@ -1,3 +1,107 @@
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.status-settings {
+  overflow: hidden;
+  border-color: var(--savia-200);
+}
+
+.status-settings .card__header {
+  align-items: flex-start;
+}
+
+.status-settings__rules {
+  display: grid;
+  border-top: 1px solid var(--border);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.status-rule {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding: 1.1rem;
+}
+
+.status-rule + .status-rule {
+  border-left: 1px solid var(--border);
+}
+
+.status-rule__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.status-rule__heading strong {
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+
+.status-rule__heading p {
+  max-width: 34rem;
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.status-rule__fields {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  transition: opacity 150ms ease;
+}
+
+.status-rule__fields--single {
+  grid-template-columns: minmax(0, 15rem);
+}
+
+.status-rule__fields--disabled {
+  opacity: 0.48;
+}
+
+.number-field {
+  position: relative;
+}
+
+.number-field input {
+  padding-right: 4.5rem;
+}
+
+.number-field span {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  color: var(--subtle);
+  font-size: 0.65rem;
+  transform: translateY(-50%);
+}
+
+.status-settings__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding: 0.85rem 1.1rem;
+  background: var(--surface-soft);
+}
+
+.status-settings__footer > span {
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.status-settings__footer > div {
+  display: flex;
+  gap: 0.55rem;
+}
+
 .operation-summary {
   display: grid;
   overflow: hidden;
@@ -278,6 +382,25 @@
 }
 
 @media (max-width: 780px) {
+  .page-header__actions,
+  .status-settings__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .status-settings__rules {
+    grid-template-columns: 1fr;
+  }
+
+  .status-rule + .status-rule {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .status-settings__footer > div {
+    justify-content: flex-end;
+  }
+
   .operation-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -306,6 +429,14 @@
 }
 
 @media (max-width: 560px) {
+  .status-rule__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .status-settings__footer > div {
+    display: grid;
+  }
+
   .operation-flow {
     display: grid;
     gap: 0.6rem;
