@@ -1,0 +1,111 @@
+<main class="login-page">
+  <section class="login-panel" aria-labelledby="login-title">
+    <a class="brand" href="/" aria-label="SaviaUp Admin">
+      <img src="logo/Logo-72.png" alt="" width="44" height="44" />
+      <span><strong>SaviaUp</strong><small>Administración</small></span>
+    </a>
+
+    <div class="login-copy">
+      <p class="eyebrow">Consola privada</p>
+      <h1 id="login-title">Control claro de toda la plataforma.</h1>
+      <p>Supervisa organizaciones, usuarios, permisos y operación desde un único espacio seguro.</p>
+    </div>
+
+    <form class="login-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (auth.error()) {
+        <div class="notice notice--error" role="alert">
+          <app-icon name="alert" />
+          <span>{{ auth.error() }}</span>
+        </div>
+      }
+
+      <label class="field">
+        <span class="field__label">Correo administrativo</span>
+        <input
+          class="field__input"
+          type="email"
+          formControlName="email"
+          autocomplete="username"
+          placeholder="nombre@saviaup.com"
+          [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched"
+        />
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <span class="field__error">Ingresa un correo válido.</span>
+        }
+      </label>
+
+      <label class="field">
+        <span class="field__label">Contraseña</span>
+        <input
+          class="field__input"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+          [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched"
+        />
+        @if (form.controls.password.invalid && form.controls.password.touched) {
+          <span class="field__error">La contraseña es obligatoria.</span>
+        }
+      </label>
+
+      <button class="button login-button" type="submit" [disabled]="auth.isLoading()">
+        @if (auth.isLoading()) {
+          <span class="spinner" aria-hidden="true"></span>
+          Verificando…
+        } @else {
+          Ingresar al administrador
+          <app-icon name="arrow-right" />
+        }
+      </button>
+    </form>
+
+    <div class="development-access">
+      <div class="development-access__icon"><app-icon name="key" /></div>
+      <div>
+        <strong>Acceso temporal de desarrollo</strong>
+        <p><code>admin@saviaup.local</code> · <code>Savia123*</code></p>
+      </div>
+    </div>
+
+    <p class="login-footer">Uso exclusivo del equipo autorizado de SaviaUp.</p>
+  </section>
+
+  <aside class="login-visual" aria-label="Resumen de la consola administrativa">
+    <div class="visual-orbit visual-orbit--one"></div>
+    <div class="visual-orbit visual-orbit--two"></div>
+    <div class="visual-copy">
+      <span class="visual-kicker"><span></span> Visibilidad centralizada</span>
+      <h2>Una vista seria para decisiones importantes.</h2>
+      <p>
+        Diseñada para operar con precisión: cada organización, cada acceso y cada alerta en su
+        contexto.
+      </p>
+    </div>
+
+    <div class="visual-dashboard">
+      <div class="visual-dashboard__top">
+        <div>
+          <small>Estado de plataforma</small>
+          <strong>Operación estable</strong>
+        </div>
+        <span class="visual-status"><span></span> En línea</span>
+      </div>
+      <div class="visual-metrics">
+        <div><small>Organizaciones</small><strong>05</strong><span>4 activas</span></div>
+        <div><small>Usuarios</small><strong>08</strong><span>7 activos</span></div>
+        <div><small>Alertas</small><strong>02</strong><span>Requieren revisión</span></div>
+      </div>
+      <div class="visual-activity">
+        <span></span>
+        <div><strong>Taller del Sabor</strong><small>Alerta operativa detectada</small></div>
+        <time>Ahora</time>
+      </div>
+      <div class="visual-activity">
+        <span class="visual-activity__healthy"></span>
+        <div><strong>Secret Garden</strong><small>Operación normal</small></div>
+        <time>2 min</time>
+      </div>
+    </div>
+  </aside>
+</main>

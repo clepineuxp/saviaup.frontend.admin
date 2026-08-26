@@ -1,0 +1,213 @@
+<div class="page operation-page">
+  <header class="page-header">
+    <div class="page-header__copy">
+      <p class="eyebrow">Supervisión operativa</p>
+      <h1 class="page-title">Operación de organizaciones</h1>
+      <p class="page-subtitle">
+        Valida el flujo desde la apertura de caja hasta la última orden procesada.
+      </p>
+    </div>
+    <button
+      class="button button--secondary"
+      type="button"
+      [disabled]="store.isLoading()"
+      (click)="refresh()"
+    >
+      <app-icon name="refresh" />
+      Actualizar datos
+    </button>
+  </header>
+
+  <section class="operation-summary">
+    <article>
+      <span>Volumen de hoy</span
+      ><strong>{{ totals().sales | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</strong
+      ><small>En organizaciones activas</small>
+    </article>
+    <article>
+      <span>Órdenes de hoy</span><strong>{{ totals().orders | number }}</strong
+      ><small>Procesadas en plataforma</small>
+    </article>
+    <article>
+      <span>Servicios en línea</span
+      ><strong
+        >{{ totals().online }}/{{
+          store.operations().filter((item) => item.health !== 'INACTIVE').length
+        }}</strong
+      ><small>Organizaciones operando</small>
+    </article>
+    <article [class.operation-summary__alert]="totals().alerts > 0">
+      <span>Hallazgos</span><strong>{{ totals().alerts }}</strong
+      ><small>Requieren seguimiento</small>
+    </article>
+  </section>
+
+  <section class="card monitor-toolbar">
+    <div class="search-field">
+      <app-icon name="search" />
+      <label class="sr-only" for="operation-search">Buscar organización</label>
+      <input
+        id="operation-search"
+        class="field__input"
+        type="search"
+        placeholder="Buscar organización"
+        [value]="search()"
+        (input)="onSearch($event)"
+      />
+    </div>
+    <div class="segmented" aria-label="Filtrar estado operativo">
+      <button
+        type="button"
+        [class.segmented__active]="filter() === 'ALL'"
+        (click)="setFilter('ALL')"
+      >
+        Todas
+      </button>
+      <button
+        type="button"
+        [class.segmented__active]="filter() === 'HEALTHY'"
+        (click)="setFilter('HEALTHY')"
+      >
+        Estables
+      </button>
+      <button
+        type="button"
+        [class.segmented__active]="filter() === 'ALERTS'"
+        (click)="setFilter('ALERTS')"
+      >
+        Con alertas
+      </button>
+      <button
+        type="button"
+        [class.segmented__active]="filter() === 'INACTIVE'"
+        (click)="setFilter('INACTIVE')"
+      >
+        Inactivas
+      </button>
+    </div>
+    <span class="updated-at">Actualizado {{ lastUpdatedAt() | date: 'HH:mm:ss' }}</span>
+  </section>
+
+  @if (store.isLoading() && store.operations().length === 0) {
+    <div class="card loading-block"></div>
+  } @else {
+    <section class="organization-operation-grid">
+      @for (item of filteredOperations(); track item.organizationId) {
+        <article
+          class="operation-card card"
+          [class.operation-card--critical]="item.health === 'CRITICAL'"
+        >
+          <header class="operation-card__header">
+            <div class="entity">
+              <span class="avatar avatar--organization">{{
+                item.organizationName.slice(0, 2).toUpperCase()
+              }}</span>
+              <div>
+                <h2>{{ item.organizationName }}</h2>
+                <p>
+                  API
+                  {{
+                    item.apiStatus === 'ONLINE'
+                      ? 'en línea'
+                      : item.apiStatus === 'DEGRADED'
+                        ? 'degradada'
+                        : 'sin conexión'
+                  }}
+                </p>
+              </div>
+            </div>
+            <span [class]="healthClass(item)">{{ healthLabel(item) }}</span>
+          </header>
+
+          <div class="operation-card__metrics">
+            <div>
+              <span>Venta</span
+              ><strong>{{ item.todaySales | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</strong>
+            </div>
+            <div>
+              <span>Órdenes</span><strong>{{ item.todayOrders }}</strong>
+            </div>
+            <div>
+              <span>Ticket prom.</span
+              ><strong>{{
+                item.averageTicket | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+              }}</strong>
+            </div>
+          </div>
+
+          <div
+            class="operation-flow"
+            [class.operation-flow--inactive]="item.health === 'INACTIVE'"
+            aria-label="Flujo de operación"
+          >
+            <div
+              [class.operation-flow__step--warning]="
+                item.cashRegisterStatus === 'CLOSED' && item.health !== 'INACTIVE'
+              "
+            >
+              <span><app-icon name="plans" /></span>
+              <strong>Caja</strong>
+              <small>{{
+                item.cashRegisterStatus === 'OPEN'
+                  ? item.openCashRegisters + ' abierta(s)'
+                  : item.cashRegisterStatus === 'NOT_REQUIRED'
+                    ? 'No requerida'
+                    : 'Cerrada'
+              }}</small>
+            </div>
+            <i></i>
+            <div>
+              <span><app-icon name="dashboard" /></span>
+              <strong>Mesas</strong>
+              <small>{{ item.occupiedTables }}/{{ item.totalTables }} ocupadas</small>
+            </div>
+            <i></i>
+            <div [class.operation-flow__step--warning]="item.health === 'CRITICAL'">
+              <span><app-icon name="activity" /></span>
+              <strong>Órdenes</strong>
+              <small>{{
+                item.lastOrderAt ? (item.lastOrderAt | date: 'HH:mm') : 'Sin actividad'
+              }}</small>
+            </div>
+            <i></i>
+            <div>
+              <span><app-icon name="check" /></span>
+              <strong>Cobro</strong>
+              <small>{{ item.todayOrders }} procesadas</small>
+            </div>
+          </div>
+
+          <div class="occupancy">
+            <div>
+              <span>Ocupación de mesas</span><strong>{{ tableOccupancy(item) }}%</strong>
+            </div>
+            <div class="occupancy__bar"><i [style.width.%]="tableOccupancy(item)"></i></div>
+          </div>
+
+          @if (item.issues.length > 0) {
+            <div class="issues">
+              @for (issue of item.issues; track issue.message) {
+                <div [class.issues__critical]="issue.severity === 'CRITICAL'">
+                  <app-icon name="alert" />
+                  <span>{{ issue.message }}</span>
+                </div>
+              }
+            </div>
+          }
+
+          <footer class="operation-card__footer">
+            <span
+              >Última orden:
+              {{
+                item.lastOrderAt ? (item.lastOrderAt | date: 'd MMM, HH:mm') : 'Sin registros'
+              }}</span
+            >
+            <a [routerLink]="['/organizations', item.organizationId]"
+              >Ver detalle <app-icon name="arrow-right"
+            /></a>
+          </footer>
+        </article>
+      }
+    </section>
+  }
+</div>

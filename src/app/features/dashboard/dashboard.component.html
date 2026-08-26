@@ -1,0 +1,203 @@
+<div class="page dashboard-page">
+  <header class="page-header">
+    <div class="page-header__copy">
+      <p class="eyebrow">Vista general</p>
+      <h1 class="page-title">Buenos días, Administrador.</h1>
+      <p class="page-subtitle">
+        Esta es la situación actual de usuarios, organizaciones y operación en SaviaUp.
+      </p>
+    </div>
+    <a class="button button--secondary" routerLink="/operation">
+      <app-icon name="activity" />
+      Ver operación en vivo
+    </a>
+  </header>
+
+  @if (store.error()) {
+    <div class="notice notice--error" role="alert">
+      <app-icon name="alert" />
+      <span>{{ store.error() }}</span>
+    </div>
+  }
+
+  @if (store.dashboard(); as dashboard) {
+    <section class="metrics-grid" aria-label="Indicadores principales">
+      <article class="metric-card card">
+        <div class="metric-card__top">
+          <span class="metric-card__icon"><app-icon name="building" /></span>
+          <span class="metric-card__trend">+{{ dashboard.organizationGrowth }}%</span>
+        </div>
+        <strong>{{ dashboard.activeOrganizations }}</strong>
+        <p>Organizaciones activas</p>
+        <small>{{ dashboard.totalOrganizations }} registradas en total</small>
+      </article>
+      <article class="metric-card card">
+        <div class="metric-card__top">
+          <span class="metric-card__icon metric-card__icon--blue"><app-icon name="users" /></span>
+          <span class="metric-card__muted">{{ dashboard.activeUsers }} activos</span>
+        </div>
+        <strong>{{ dashboard.totalUsers }}</strong>
+        <p>Usuarios registrados</p>
+        <small>En todas las organizaciones</small>
+      </article>
+      <article class="metric-card card">
+        <div class="metric-card__top">
+          <span class="metric-card__icon metric-card__icon--dark"
+            ><app-icon name="activity"
+          /></span>
+          <span class="metric-card__muted">Hoy</span>
+        </div>
+        <strong>{{ dashboard.todayOrders | number }}</strong>
+        <p>Órdenes procesadas</p>
+        <small>{{
+          dashboard.todayGrossVolume | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+        }}</small>
+      </article>
+      <article
+        class="metric-card card"
+        [class.metric-card--alert]="dashboard.organizationsWithAlerts > 0"
+      >
+        <div class="metric-card__top">
+          <span class="metric-card__icon metric-card__icon--warning"
+            ><app-icon name="alert"
+          /></span>
+          <span class="metric-card__muted">Revisión</span>
+        </div>
+        <strong>{{ dashboard.organizationsWithAlerts }}</strong>
+        <p>Alertas operativas</p>
+        <small>Organizaciones que requieren atención</small>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="card health-card">
+        <header class="card__header">
+          <div>
+            <h2 class="card__title">Salud de organizaciones</h2>
+            <p class="card__subtitle">Lectura consolidada de la operación de hoy</p>
+          </div>
+          <a class="text-link" routerLink="/operation">Ver todas</a>
+        </header>
+        <div class="health-list">
+          @for (item of dashboard.organizationHealth; track item.organizationId) {
+            <a class="health-row" [routerLink]="['/organizations', item.organizationId]">
+              <span class="avatar avatar--organization">{{
+                item.organizationName.slice(0, 2).toUpperCase()
+              }}</span>
+              <div class="health-row__name">
+                <strong>{{ item.organizationName }}</strong>
+                <span
+                  >{{ item.todayOrders }} órdenes · {{ item.occupiedTables }}/{{
+                    item.totalTables
+                  }}
+                  mesas</span
+                >
+              </div>
+              <div class="health-row__sales">
+                <strong>{{ item.todaySales | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</strong>
+                <span>Venta de hoy</span>
+              </div>
+              <span [class]="healthClass(item.health)">{{ healthLabel(item.health) }}</span>
+              <app-icon class="health-row__arrow" name="arrow-right" />
+            </a>
+          }
+        </div>
+      </article>
+
+      <article class="card revenue-card">
+        <header class="card__header">
+          <div>
+            <h2 class="card__title">Ingreso recurrente estimado</h2>
+            <p class="card__subtitle">Proyección según los planes asignados</p>
+          </div>
+        </header>
+        <div class="revenue-card__body">
+          <div class="revenue-total">
+            <span>MRR actual</span>
+            <strong>{{
+              dashboard.monthlyRecurringRevenue | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+            }}</strong>
+            <small>Dato de preparación para el futuro motor de billing.</small>
+          </div>
+          <div class="bars" aria-label="Tendencia estimada de ingreso recurrente">
+            <span style="height: 38%"></span>
+            <span style="height: 52%"></span>
+            <span style="height: 49%"></span>
+            <span style="height: 63%"></span>
+            <span style="height: 70%"></span>
+            <span class="bars__active" style="height: 86%"></span>
+          </div>
+          <div class="bars__labels">
+            <span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span
+            ><span>Ago</span>
+          </div>
+          <a class="button button--secondary" routerLink="/plans">Revisar planes y precios</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="lower-grid">
+      <article class="card activity-card">
+        <header class="card__header">
+          <div>
+            <h2 class="card__title">Actividad administrativa reciente</h2>
+            <p class="card__subtitle">Cambios sensibles y señales de la plataforma</p>
+          </div>
+        </header>
+        <div class="activity-list">
+          @for (event of dashboard.recentEvents; track event.id) {
+            <div class="activity-row">
+              <span
+                class="activity-row__icon"
+                [class.activity-row__icon--warning]="event.kind === 'OPERATION'"
+              >
+                <app-icon
+                  [name]="
+                    event.kind === 'USER'
+                      ? 'users'
+                      : event.kind === 'OPERATION'
+                        ? 'alert'
+                        : 'shield'
+                  "
+                />
+              </span>
+              <div>
+                <p>
+                  <strong>{{ event.action }}</strong> · {{ event.subject }}
+                </p>
+                <span>{{ event.detail }}</span>
+              </div>
+              <time>{{ event.occurredAt | date: 'd MMM, HH:mm' }}</time>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="quick-card">
+        <div>
+          <p class="eyebrow">Acciones rápidas</p>
+          <h2>Gestiona lo importante sin perder contexto.</h2>
+        </div>
+        <div class="quick-links">
+          <a routerLink="/users"
+            ><app-icon name="users" /><span
+              >Buscar usuario<small>Accesos y organizaciones</small></span
+            ><app-icon name="arrow-right"
+          /></a>
+          <a routerLink="/organizations"
+            ><app-icon name="building" /><span
+              >Revisar organización<small>Owner, permisos y estado</small></span
+            ><app-icon name="arrow-right"
+          /></a>
+          <a routerLink="/operation"
+            ><app-icon name="activity" /><span
+              >Validar operación<small>Ventas, mesas y alertas</small></span
+            ><app-icon name="arrow-right"
+          /></a>
+        </div>
+      </article>
+    </section>
+  } @else {
+    <div class="card loading-block"></div>
+  }
+</div>

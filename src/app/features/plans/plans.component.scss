@@ -1,0 +1,233 @@
+.roadmap-notice {
+  align-items: flex-start;
+}
+
+.roadmap-notice div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.roadmap-notice span {
+  max-width: 880px;
+}
+
+.plan-grid {
+  display: grid;
+  align-items: stretch;
+  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pricing-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+}
+
+.pricing-card--featured {
+  border-color: var(--savia-300);
+  box-shadow: 0 14px 40px rgb(52 127 85 / 10%);
+}
+
+.pricing-card__recommended {
+  position: absolute;
+  top: -0.55rem;
+  left: 50%;
+  border-radius: 999px;
+  padding: 0.28rem 0.58rem;
+  background: var(--savia-800);
+  color: #fff;
+  font-size: 0.61rem;
+  font-weight: 750;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.pricing-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pricing-card__icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: var(--savia-100);
+  color: var(--savia-700);
+}
+
+.pricing-card h2 {
+  margin: 1.1rem 0 0;
+  color: var(--ink);
+  font-size: 1.25rem;
+  letter-spacing: -0.035em;
+}
+
+.pricing-card > p {
+  min-height: 3.15rem;
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.pricing-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-top: 1.1rem;
+}
+
+.pricing-card__price strong {
+  color: var(--ink);
+  font-size: 1.8rem;
+  letter-spacing: -0.05em;
+}
+
+.pricing-card__price span {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.pricing-card dl {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1.1rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.pricing-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pricing-card dt,
+.pricing-card dd {
+  margin: 0;
+  font-size: 0.7rem;
+}
+
+.pricing-card dt {
+  color: var(--muted);
+}
+
+.pricing-card dd {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.pricing-card .button {
+  width: 100%;
+  margin-top: auto;
+}
+
+.readiness-badge {
+  border-radius: 999px;
+  padding: 0.35rem 0.58rem;
+  background: var(--savia-50);
+  color: var(--savia-700);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.readiness-steps {
+  display: grid;
+  padding: 1.25rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.readiness-step {
+  position: relative;
+  display: grid;
+  gap: 0.7rem;
+  padding-right: 1.1rem;
+  grid-template-columns: auto 1fr;
+}
+
+.readiness-step:not(:last-child)::after {
+  position: absolute;
+  top: 1rem;
+  right: 0.4rem;
+  left: 2.6rem;
+  height: 1px;
+  background: var(--border-strong);
+  content: '';
+}
+
+.readiness-step > span {
+  z-index: 1;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.readiness-step--done > span {
+  border-color: var(--savia-500);
+  background: var(--savia-600);
+  color: #fff;
+}
+
+.readiness-step div {
+  padding-top: 2.65rem;
+  margin-left: -2.7rem;
+}
+
+.readiness-step small {
+  color: var(--savia-600);
+  font-size: 0.59rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.readiness-step h3 {
+  margin: 0.3rem 0 0;
+  color: var(--ink);
+  font-size: 0.79rem;
+}
+
+.readiness-step p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 1000px) {
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-card > p {
+    min-height: 0;
+  }
+
+  .readiness-steps {
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .readiness-badge {
+    display: none;
+  }
+
+  .readiness-steps {
+    grid-template-columns: 1fr;
+  }
+}

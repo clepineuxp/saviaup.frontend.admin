@@ -1,0 +1,430 @@
+<div class="page organization-detail-page">
+  <a class="back-link" routerLink="/organizations"><app-icon name="arrow-left" /> Organizaciones</a>
+
+  @if (store.organization(); as organization) {
+    <header class="organization-hero">
+      <div class="organization-hero__identity">
+        <span class="organization-mark">{{ organization.name.slice(0, 2).toUpperCase() }}</span>
+        <div>
+          <div class="organization-hero__title-row">
+            <h1>{{ organization.name }}</h1>
+            <span [class]="organization.isActive ? 'status' : 'status status--neutral'">
+              {{ organization.isActive ? 'Activa' : 'Inactiva' }}
+            </span>
+          </div>
+          <p>{{ organization.legalName }} · {{ organization.documentNumber }}</p>
+          <span class="organization-slug">saviaup.com/{{ organization.slug }}</span>
+        </div>
+      </div>
+      <div class="organization-hero__meta">
+        <div>
+          <span>Owner</span><strong>{{ organization.owner.name }}</strong>
+        </div>
+        <div>
+          <span>Plan</span><strong>{{ organization.plan?.name ?? 'Sin plan' }}</strong>
+        </div>
+        <div>
+          <span>Creada</span><strong>{{ organization.createdAt | date: 'd MMM, y' }}</strong>
+        </div>
+      </div>
+    </header>
+
+    @if (store.notice(); as notice) {
+      <div class="notice" [class.notice--error]="notice.tone === 'ERROR'" role="status">
+        <app-icon [name]="notice.tone === 'ERROR' ? 'alert' : 'check'" />
+        <span>{{ notice.message }}</span>
+      </div>
+    }
+
+    <nav class="tabs" aria-label="Secciones de la organización">
+      <button
+        class="tab"
+        [class.tab--active]="tab() === 'OVERVIEW'"
+        type="button"
+        (click)="setTab('OVERVIEW')"
+      >
+        Resumen
+      </button>
+      <button
+        class="tab"
+        [class.tab--active]="tab() === 'PERMISSIONS'"
+        type="button"
+        (click)="setTab('PERMISSIONS')"
+      >
+        Permisos <span class="tab__count">{{ organization.activePermissionCount }}</span>
+      </button>
+      <button
+        class="tab"
+        [class.tab--active]="tab() === 'MEMBERS'"
+        type="button"
+        (click)="setTab('MEMBERS')"
+      >
+        Usuarios <span class="tab__count">{{ organization.members.length }}</span>
+      </button>
+      <button
+        class="tab"
+        [class.tab--active]="tab() === 'OPERATION'"
+        type="button"
+        (click)="setTab('OPERATION')"
+      >
+        Operación
+      </button>
+    </nav>
+
+    @switch (tab()) {
+      @case ('OVERVIEW') {
+        <section class="overview-grid">
+          <div class="overview-main">
+            <article class="card">
+              <header class="card__header">
+                <div>
+                  <h2 class="card__title">Información de la organización</h2>
+                  <p class="card__subtitle">Datos principales visibles para administración</p>
+                </div>
+              </header>
+              <dl class="details-grid card__body">
+                <div>
+                  <dt>Razón social</dt>
+                  <dd>{{ organization.legalName }}</dd>
+                </div>
+                <div>
+                  <dt>Documento</dt>
+                  <dd>{{ organization.documentNumber }}</dd>
+                </div>
+                <div>
+                  <dt>Correo de contacto</dt>
+                  <dd>{{ organization.contactEmail }}</dd>
+                </div>
+                <div>
+                  <dt>Ciudad</dt>
+                  <dd>{{ organization.city }}</dd>
+                </div>
+                <div>
+                  <dt>Última actividad</dt>
+                  <dd>{{ organization.lastActivityAt | date: 'd MMM y, HH:mm' }}</dd>
+                </div>
+                <div>
+                  <dt>Identificador</dt>
+                  <dd>
+                    <code>{{ organization.id }}</code>
+                  </dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="card">
+              <header class="card__header">
+                <div>
+                  <h2 class="card__title">Transferir propiedad</h2>
+                  <p class="card__subtitle">
+                    Cambia el owner sin perder la membresía del propietario anterior
+                  </p>
+                </div>
+                <span class="owner-lock"><app-icon name="shield" /> Acción sensible</span>
+              </header>
+              <div class="owner-panel card__body">
+                <div class="owner-current">
+                  <span class="avatar">{{
+                    organization.owner.name.slice(0, 2).toUpperCase()
+                  }}</span>
+                  <div>
+                    <span>Owner actual</span><strong>{{ organization.owner.name }}</strong
+                    ><small>{{ organization.owner.email }}</small>
+                  </div>
+                </div>
+                @if (ownerCandidates().length > 0) {
+                  <label class="field">
+                    <span class="field__label">Nuevo owner</span>
+                    <select
+                      class="field__input"
+                      [value]="selectedOwnerId()"
+                      (change)="onOwnerChange($event)"
+                    >
+                      @for (candidate of ownerCandidates(); track candidate.userId) {
+                        <option [value]="candidate.userId">
+                          {{ candidate.name }} · {{ candidate.roleName }}
+                        </option>
+                      }
+                    </select>
+                  </label>
+                  <div class="owner-panel__footer">
+                    <p>El nuevo owner debe ser miembro activo de esta organización.</p>
+                    <button
+                      class="button"
+                      [class.button--danger]="ownerConfirmation()"
+                      type="button"
+                      [disabled]="store.pendingAction() === 'change-owner' || !selectedOwnerId()"
+                      (click)="changeOwner()"
+                    >
+                      {{ ownerConfirmation() ? 'Confirmar transferencia' : 'Cambiar owner' }}
+                    </button>
+                  </div>
+                } @else {
+                  <div class="notice notice--warning">
+                    <app-icon name="alert" /><span
+                      >No hay otro miembro activo que pueda recibir la propiedad.</span
+                    >
+                  </div>
+                }
+              </div>
+            </article>
+          </div>
+
+          <aside class="overview-aside">
+            <article class="plan-card">
+              <div class="plan-card__label"><app-icon name="plans" /> Plan asignado</div>
+              <h2>{{ organization.plan?.name ?? 'Sin plan' }}</h2>
+              @if (organization.plan; as plan) {
+                <p>
+                  <strong>{{
+                    plan.monthlyPrice | currency: plan.currency : 'symbol-narrow' : '1.0-0'
+                  }}</strong>
+                  / mes
+                </p>
+              }
+              <div class="plan-card__progress">
+                <span>Capacidades habilitadas</span
+                ><strong
+                  >{{ organization.activePermissionCount }}/{{
+                    organization.totalPermissionCount
+                  }}</strong
+                >
+              </div>
+              <div class="permission-progress">
+                <i
+                  [style.width.%]="
+                    (organization.activePermissionCount / organization.totalPermissionCount) * 100
+                  "
+                ></i>
+              </div>
+              <button
+                class="button button--secondary"
+                type="button"
+                (click)="setTab('PERMISSIONS')"
+              >
+                Administrar permisos
+              </button>
+            </article>
+
+            <article class="card owner-summary">
+              <div class="card__body">
+                <span class="owner-summary__icon"><app-icon name="users" /></span>
+                <div>
+                  <strong>{{ organization.members.length }}</strong>
+                  <p>usuarios vinculados</p>
+                </div>
+              </div>
+              <button type="button" (click)="setTab('MEMBERS')">
+                Ver usuarios <app-icon name="arrow-right" />
+              </button>
+            </article>
+          </aside>
+        </section>
+      }
+
+      @case ('PERMISSIONS') {
+        <section class="permissions-layout">
+          <div class="notice notice--warning permission-warning">
+            <app-icon name="shield" />
+            <span
+              ><strong>Límite de capacidades del tenant.</strong> Al deshabilitar un permiso, deja
+              de estar disponible para navegación, autorización y roles de esta organización.</span
+            >
+          </div>
+          <div class="permission-groups">
+            @for (group of permissionGroups(); track group.code) {
+              <article class="card permission-group">
+                <header class="card__header">
+                  <div>
+                    <h2 class="card__title">{{ group.name }}</h2>
+                    <p class="card__subtitle">
+                      {{ enabledCount(group) }} de {{ group.permissions.length }} capacidades
+                      habilitadas
+                    </p>
+                  </div>
+                  <span class="permission-group__count"
+                    >{{ enabledCount(group) }}/{{ group.permissions.length }}</span
+                  >
+                </header>
+                <div class="permission-list">
+                  @for (permission of group.permissions; track permission.code) {
+                    <div class="permission-row">
+                      <div>
+                        <strong>{{ permission.name }}</strong>
+                        <p>{{ permission.description }}</p>
+                        <code>{{ permission.code }}</code>
+                      </div>
+                      <button
+                        class="switch"
+                        type="button"
+                        role="switch"
+                        [attr.aria-label]="
+                          (permission.enabled ? 'Deshabilitar ' : 'Habilitar ') + permission.name
+                        "
+                        [attr.aria-checked]="permission.enabled"
+                        [disabled]="store.pendingAction() === 'permission:' + permission.code"
+                        (click)="store.setTenantPermission(permission.code, !permission.enabled)"
+                      ></button>
+                    </div>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      }
+
+      @case ('MEMBERS') {
+        <section class="card members-card">
+          <header class="card__header">
+            <div>
+              <h2 class="card__title">Usuarios de {{ organization.name }}</h2>
+              <p class="card__subtitle">
+                Reactiva o suspende accesos individuales a esta organización
+              </p>
+            </div>
+            <a class="button button--secondary button--sm" routerLink="/users"
+              ><app-icon name="users" /> Gestión global</a
+            >
+          </header>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Rol</th>
+                  <th>Último acceso</th>
+                  <th>Estado</th>
+                  <th><span class="sr-only">Acción</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (member of organization.members; track member.membershipId) {
+                  <tr>
+                    <td>
+                      <div class="entity">
+                        <span class="avatar">{{ member.name.slice(0, 2).toUpperCase() }}</span>
+                        <div>
+                          <p class="entity__name">{{ member.name }}</p>
+                          <p class="entity__meta">{{ member.email }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="chip">{{ member.roleName }}</span>
+                    </td>
+                    <td>
+                      {{
+                        member.lastAccessAt
+                          ? (member.lastAccessAt | date: 'd MMM y, HH:mm')
+                          : 'Nunca'
+                      }}
+                    </td>
+                    <td>
+                      <span [class]="member.isActive ? 'status' : 'status status--danger'">{{
+                        member.isActive ? 'Activo' : 'Deshabilitado'
+                      }}</span>
+                    </td>
+                    <td class="member-action">
+                      <button
+                        class="button button--secondary button--sm"
+                        type="button"
+                        [disabled]="
+                          member.roleCode === 'TENANT_OWNER' ||
+                          store.pendingAction() === 'membership:' + member.membershipId
+                        "
+                        (click)="store.setOrganizationMemberStatus(member)"
+                      >
+                        {{ member.isActive ? 'Deshabilitar' : 'Reactivar' }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @case ('OPERATION') {
+        @if (activeOperation(); as operation) {
+          <section class="operation-detail">
+            <article
+              class="operation-status-card"
+              [class.operation-status-card--warning]="operation.health !== 'HEALTHY'"
+            >
+              <div>
+                <p class="eyebrow">Estado actual</p>
+                <h2>{{ healthLabel(operation.health) }}</h2>
+                <p>
+                  Última orden:
+                  {{
+                    operation.lastOrderAt
+                      ? (operation.lastOrderAt | date: 'd MMM y, HH:mm')
+                      : 'Sin registros'
+                  }}
+                </p>
+              </div>
+              <span [class]="healthClass(operation.health)">{{ operation.apiStatus }}</span>
+            </article>
+            <div class="operation-metrics">
+              <article class="card">
+                <span>Venta del día</span
+                ><strong>{{
+                  operation.todaySales | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                }}</strong
+                ><small>{{ operation.todayOrders }} órdenes</small>
+              </article>
+              <article class="card">
+                <span>Ticket promedio</span
+                ><strong>{{
+                  operation.averageTicket | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                }}</strong
+                ><small>Promedio de hoy</small>
+              </article>
+              <article class="card">
+                <span>Mesas ocupadas</span
+                ><strong>{{ operation.occupiedTables }}/{{ operation.totalTables }}</strong
+                ><small
+                  >{{
+                    operation.totalTables
+                      ? ((operation.occupiedTables / operation.totalTables) * 100 | number: '1.0-0')
+                      : 0
+                  }}% de ocupación</small
+                >
+              </article>
+              <article class="card">
+                <span>Cajas abiertas</span><strong>{{ operation.openCashRegisters }}</strong
+                ><small>{{
+                  operation.cashRegisterStatus === 'OPEN' ? 'Turno activo' : 'Sin turno abierto'
+                }}</small>
+              </article>
+            </div>
+            @if (operation.issues.length > 0) {
+              <article class="card issue-card">
+                <header class="card__header">
+                  <div>
+                    <h2 class="card__title">Hallazgos operativos</h2>
+                    <p class="card__subtitle">Señales que requieren seguimiento</p>
+                  </div>
+                </header>
+                <div class="issue-list">
+                  @for (issue of operation.issues; track issue.message) {
+                    <div>
+                      <app-icon name="alert" /><span>{{ issue.message }}</span
+                      ><strong>{{
+                        issue.severity === 'CRITICAL' ? 'Crítica' : 'Advertencia'
+                      }}</strong>
+                    </div>
+                  }
+                </div>
+              </article>
+            }
+          </section>
+        }
+      }
+    }
+  } @else {
+    <div class="card loading-block"></div>
+  }
+</div>

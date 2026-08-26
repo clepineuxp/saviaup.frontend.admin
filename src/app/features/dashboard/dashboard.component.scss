@@ -1,0 +1,359 @@
+.metrics-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric-card {
+  padding: 1.15rem;
+}
+
+.metric-card--alert {
+  border-color: #ead8ae;
+}
+
+.metric-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.metric-card__icon {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: var(--savia-100);
+  color: var(--savia-700);
+}
+
+.metric-card__icon--blue {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.metric-card__icon--dark {
+  background: var(--savia-900);
+  color: var(--lime);
+}
+
+.metric-card__icon--warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.metric-card__trend {
+  border-radius: 999px;
+  padding: 0.24rem 0.45rem;
+  background: var(--savia-50);
+  color: var(--savia-700);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.metric-card__muted {
+  color: var(--subtle);
+  font-size: 0.67rem;
+  font-weight: 650;
+}
+
+.metric-card > strong {
+  display: block;
+  margin-top: 1rem;
+  color: var(--ink);
+  font-size: 1.75rem;
+  letter-spacing: -0.04em;
+}
+
+.metric-card p {
+  margin: 0.18rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 680;
+}
+
+.metric-card > small {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--subtle);
+  font-size: 0.66rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.75fr);
+}
+
+.text-link {
+  color: var(--savia-700);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.health-list {
+  display: grid;
+}
+
+.health-row {
+  display: grid;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.82rem 1.15rem;
+  border-top: 1px solid var(--border);
+  color: inherit;
+  grid-template-columns: auto minmax(130px, 1fr) minmax(110px, 0.5fr) auto auto;
+  text-decoration: none;
+}
+
+.health-row:first-child {
+  border-top: 0;
+}
+
+.health-row:hover {
+  background: var(--surface-soft);
+}
+
+.health-row__name,
+.health-row__sales {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.health-row__name strong,
+.health-row__sales strong {
+  color: var(--ink);
+  font-size: 0.78rem;
+}
+
+.health-row__name span,
+.health-row__sales span {
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.health-row__arrow {
+  color: var(--subtle);
+}
+
+.revenue-card__body {
+  padding: 1.15rem;
+}
+
+.revenue-total {
+  display: grid;
+}
+
+.revenue-total > span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.revenue-total strong {
+  margin-top: 0.3rem;
+  color: var(--ink);
+  font-size: 1.7rem;
+  letter-spacing: -0.045em;
+}
+
+.revenue-total small {
+  margin-top: 0.28rem;
+  color: var(--subtle);
+  font-size: 0.63rem;
+  line-height: 1.4;
+}
+
+.bars {
+  display: flex;
+  height: 115px;
+  align-items: flex-end;
+  gap: 0.46rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.bars span {
+  flex: 1;
+  min-height: 10px;
+  border-radius: 0.3rem 0.3rem 0 0;
+  background: var(--savia-100);
+}
+
+.bars .bars__active {
+  background: var(--savia-600);
+}
+
+.bars__labels {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 0.32rem;
+  color: var(--subtle);
+  font-size: 0.57rem;
+}
+
+.revenue-card .button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.lower-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.65fr);
+}
+
+.activity-list {
+  display: grid;
+}
+
+.activity-row {
+  display: grid;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.78rem 1.15rem;
+  border-top: 1px solid var(--border);
+  grid-template-columns: auto 1fr auto;
+}
+
+.activity-row:first-child {
+  border-top: 0;
+}
+
+.activity-row__icon {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--savia-50);
+  color: var(--savia-700);
+}
+
+.activity-row__icon--warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.activity-row p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+
+.activity-row span,
+.activity-row time {
+  color: var(--subtle);
+  font-size: 0.64rem;
+}
+
+.activity-row div > span {
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.quick-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  padding: 1.2rem;
+  background:
+    radial-gradient(circle at 90% 5%, rgb(216 238 157 / 16%), transparent 30%), var(--savia-950);
+  color: #f4f8f5;
+}
+
+.quick-card .eyebrow {
+  color: var(--lime);
+}
+
+.quick-card h2 {
+  max-width: 330px;
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.quick-links {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.4rem;
+}
+
+.quick-links a {
+  display: grid;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 0.75rem;
+  padding: 0.68rem;
+  background: rgb(255 255 255 / 4%);
+  color: #dce7df;
+  grid-template-columns: auto 1fr auto;
+  text-decoration: none;
+}
+
+.quick-links a:hover {
+  border-color: rgb(216 238 157 / 18%);
+  background: rgb(216 238 157 / 7%);
+}
+
+.quick-links span {
+  display: grid;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.quick-links small {
+  margin-top: 0.15rem;
+  color: #84988b;
+  font-size: 0.6rem;
+  font-weight: 500;
+}
+
+@media (max-width: 1180px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid,
+  .lower-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .health-row {
+    align-items: start;
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .health-row__sales {
+    display: none;
+  }
+
+  .health-row .status {
+    grid-column: 2;
+  }
+
+  .health-row__arrow {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .activity-row {
+    grid-template-columns: auto 1fr;
+  }
+
+  .activity-row time {
+    display: none;
+  }
+}

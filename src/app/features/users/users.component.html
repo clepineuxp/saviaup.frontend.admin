@@ -1,0 +1,261 @@
+<div class="page users-page">
+  <header class="page-header">
+    <div class="page-header__copy">
+      <p class="eyebrow">Identidad y acceso</p>
+      <h1 class="page-title">Usuarios</h1>
+      <p class="page-subtitle">
+        Consulta las cuentas creadas, sus organizaciones y el estado de cada membresía.
+      </p>
+    </div>
+    <span class="records-count"
+      >{{ filteredUsers().length }} de {{ store.users().length }} usuarios</span
+    >
+  </header>
+
+  <section class="card">
+    <div class="toolbar">
+      <div class="search-field">
+        <app-icon name="search" />
+        <label class="sr-only" for="user-search">Buscar usuarios</label>
+        <input
+          id="user-search"
+          class="field__input"
+          type="search"
+          placeholder="Buscar por nombre, correo u organización"
+          [value]="search()"
+          (input)="onSearch($event)"
+        />
+      </div>
+      <div class="toolbar__filters">
+        <label class="sr-only" for="user-status">Filtrar por estado</label>
+        <select id="user-status" class="field__input filter-select" (change)="onFilter($event)">
+          <option value="ALL">Todos los estados</option>
+          <option value="ACTIVE">Con acceso activo</option>
+          <option value="INACTIVE">Sin acceso activo</option>
+        </select>
+      </div>
+    </div>
+
+    @if (store.isLoading() && store.users().length === 0) {
+      <div class="loading-block"></div>
+    } @else if (filteredUsers().length === 0) {
+      <div class="empty-state">
+        <span class="empty-state__icon"><app-icon name="users" /></span>
+        <h3>No encontramos usuarios</h3>
+        <p>Ajusta la búsqueda o el filtro de estado para ver más resultados.</p>
+      </div>
+    } @else {
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Organizaciones</th>
+              <th>Estado de acceso</th>
+              <th>Último acceso</th>
+              <th><span class="sr-only">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of filteredUsers(); track user.id) {
+              <tr>
+                <td>
+                  <div class="entity">
+                    <span class="avatar">{{ initials(user) }}</span>
+                    <div>
+                      <p class="entity__name">{{ user.firstName }} {{ user.lastName }}</p>
+                      <p class="entity__meta">{{ user.email }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="membership-chips">
+                    @for (membership of user.memberships.slice(0, 2); track membership.id) {
+                      <span class="chip" [class.chip--inactive]="!membership.isActive">
+                        {{ membership.organizationName }}
+                      </span>
+                    }
+                    @if (user.memberships.length > 2) {
+                      <span class="chip">+{{ user.memberships.length - 2 }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  @if (user.memberships.some((membership) => membership.isActive)) {
+                    <span class="status">Con acceso</span>
+                  } @else {
+                    <span class="status status--danger">Sin acceso</span>
+                  }
+                </td>
+                <td>
+                  @if (user.lastAccessAt) {
+                    <span class="last-access"
+                      >{{ user.lastAccessAt | date: 'd MMM, y'
+                      }}<small>{{ user.lastAccessAt | date: 'HH:mm' }}</small></span
+                    >
+                  } @else {
+                    <span class="text-subtle">Nunca</span>
+                  }
+                </td>
+                <td class="actions-cell">
+                  <button
+                    class="button button--secondary button--sm"
+                    type="button"
+                    (click)="openUser(user)"
+                  >
+                    Gestionar
+                    <app-icon name="arrow-right" />
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
+
+@if (selectedUser(); as user) {
+  <button class="backdrop" type="button" aria-label="Cerrar detalle" (click)="closeUser()"></button>
+  <aside class="drawer" aria-labelledby="user-drawer-title">
+    <header class="drawer__header">
+      <div class="entity">
+        <span class="avatar">{{ initials(user) }}</span>
+        <div>
+          <h2 class="drawer__title" id="user-drawer-title">
+            {{ user.firstName }} {{ user.lastName }}
+          </h2>
+          <p class="entity__meta">{{ user.email }}</p>
+        </div>
+      </div>
+      <button class="icon-button" type="button" (click)="closeUser()" aria-label="Cerrar detalle">
+        <app-icon name="x" />
+      </button>
+    </header>
+
+    <div class="drawer__body">
+      @if (store.notice(); as notice) {
+        <div class="notice" [class.notice--error]="notice.tone === 'ERROR'" role="status">
+          <app-icon [name]="notice.tone === 'ERROR' ? 'alert' : 'check'" />
+          <span>{{ notice.message }}</span>
+        </div>
+      }
+
+      <section>
+        <h3 class="section-title">Organizaciones y accesos</h3>
+        <p class="section-copy">Cada membresía se administra de forma independiente.</p>
+        <div class="membership-list">
+          @for (membership of user.memberships; track membership.id) {
+            <article class="membership-card">
+              <div class="membership-card__main">
+                <span class="avatar avatar--organization">{{
+                  membership.organizationName.slice(0, 2).toUpperCase()
+                }}</span>
+                <div>
+                  <strong>{{ membership.organizationName }}</strong>
+                  <span>{{ membership.roleName }}</span>
+                </div>
+              </div>
+              <div class="membership-card__action">
+                <span [class]="membership.isActive ? 'status' : 'status status--danger'">
+                  {{ membershipStatus(membership) }}
+                </span>
+                <button
+                  class="button button--secondary button--sm"
+                  type="button"
+                  [disabled]="
+                    membership.roleCode === 'TENANT_OWNER' ||
+                    store.pendingAction() === 'membership:' + membership.id
+                  "
+                  (click)="store.setMembershipStatus(user, membership.id)"
+                >
+                  {{ membership.isActive ? 'Deshabilitar' : 'Reactivar' }}
+                </button>
+              </div>
+              @if (membership.roleCode === 'TENANT_OWNER') {
+                <p class="membership-card__note">
+                  Transfiere primero la propiedad para modificar este acceso.
+                </p>
+              }
+            </article>
+          }
+        </div>
+      </section>
+
+      <hr class="divider" />
+
+      <section>
+        <h3 class="section-title">Reasignar a otra organización</h3>
+        <p class="section-copy">
+          Mueve una membresía no propietaria. El usuario ingresará como administrador en el destino.
+        </p>
+        @if (movableMemberships().length > 0 && targetOrganizations().length > 0) {
+          <div class="reassign-form">
+            <label class="field">
+              <span class="field__label">Acceso que se moverá</span>
+              <select
+                class="field__input"
+                [value]="membershipToMove()"
+                (change)="onMembershipToMove($event)"
+              >
+                @for (membership of movableMemberships(); track membership.id) {
+                  <option [value]="membership.id">
+                    {{ membership.organizationName }} · {{ membership.roleName }}
+                  </option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              <span class="field__label">Organización de destino</span>
+              <select
+                class="field__input"
+                [value]="targetOrganizationId()"
+                (change)="onTargetOrganization($event)"
+              >
+                @for (organization of targetOrganizations(); track organization.id) {
+                  <option [value]="organization.id">{{ organization.name }}</option>
+                }
+              </select>
+            </label>
+            <button
+              class="button button--secondary"
+              type="button"
+              [disabled]="store.pendingAction() === 'reassign-membership'"
+              (click)="reassign(user)"
+            >
+              <app-icon name="refresh" />
+              Reasignar membresía
+            </button>
+          </div>
+        } @else {
+          <div class="notice notice--warning">
+            <app-icon name="alert" />
+            <span>No hay una membresía movible o una organización de destino disponible.</span>
+          </div>
+        }
+      </section>
+
+      <hr class="divider" />
+
+      <section class="security-action">
+        <div class="security-action__icon"><app-icon name="key" /></div>
+        <div>
+          <h3 class="section-title">Restablecer contraseña</h3>
+          <p class="section-copy">
+            Genera una solicitud neutral y revoca las sesiones cuando el backend lo implemente.
+          </p>
+        </div>
+        <button
+          class="button"
+          [class.button--danger]="resetConfirmation()"
+          type="button"
+          [disabled]="store.pendingAction() === 'password-reset:' + user.id"
+          (click)="resetPassword(user)"
+        >
+          {{ resetConfirmation() ? 'Confirmar solicitud' : 'Solicitar restablecimiento' }}
+        </button>
+      </section>
+    </div>
+  </aside>
+}

@@ -1,0 +1,169 @@
+<div class="page organizations-page">
+  <header class="page-header">
+    <div class="page-header__copy">
+      <p class="eyebrow">Ecosistema SaviaUp</p>
+      <h1 class="page-title">Organizaciones</h1>
+      <p class="page-subtitle">
+        Administra el estado, owner, plan y alcance de permisos de cada organización.
+      </p>
+    </div>
+    <div class="page-summary">
+      <span
+        ><strong>{{ store.organizations().length }}</strong> registradas</span
+      >
+      <span
+        ><strong>{{ store.organizations().filter((item) => item.isActive).length }}</strong>
+        activas</span
+      >
+    </div>
+  </header>
+
+  @if (store.notice(); as notice) {
+    <div class="notice" [class.notice--error]="notice.tone === 'ERROR'" role="status">
+      <app-icon [name]="notice.tone === 'ERROR' ? 'alert' : 'check'" />
+      <span>{{ notice.message }}</span>
+    </div>
+  }
+
+  <section class="card">
+    <div class="toolbar">
+      <div class="search-field">
+        <app-icon name="search" />
+        <label class="sr-only" for="organization-search">Buscar organizaciones</label>
+        <input
+          id="organization-search"
+          class="field__input"
+          type="search"
+          placeholder="Buscar organización, razón social u owner"
+          [value]="search()"
+          (input)="onSearch($event)"
+        />
+      </div>
+      <div class="toolbar__filters">
+        <label class="sr-only" for="organization-status">Filtrar organizaciones</label>
+        <select
+          id="organization-status"
+          class="field__input filter-select"
+          (change)="onFilter($event)"
+        >
+          <option value="ALL">Todas las organizaciones</option>
+          <option value="ACTIVE">Activas</option>
+          <option value="INACTIVE">Inactivas</option>
+          <option value="ALERTS">Con alertas</option>
+        </select>
+      </div>
+    </div>
+
+    @if (store.isLoading() && store.organizations().length === 0) {
+      <div class="loading-block"></div>
+    } @else if (filteredOrganizations().length === 0) {
+      <div class="empty-state">
+        <span class="empty-state__icon"><app-icon name="building" /></span>
+        <h3>No encontramos organizaciones</h3>
+        <p>Cambia la búsqueda o el filtro para revisar otros resultados.</p>
+      </div>
+    } @else {
+      <div class="data-table-wrap">
+        <table class="data-table organization-table">
+          <thead>
+            <tr>
+              <th>Organización</th>
+              <th>Owner</th>
+              <th>Plan</th>
+              <th>Capacidades</th>
+              <th>Operación</th>
+              <th>Estado</th>
+              <th><span class="sr-only">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (organization of filteredOrganizations(); track organization.id) {
+              <tr>
+                <td>
+                  <a
+                    class="entity organization-link"
+                    [routerLink]="['/organizations', organization.id]"
+                  >
+                    <span class="avatar avatar--organization">{{
+                      initials(organization.name)
+                    }}</span>
+                    <div>
+                      <p class="entity__name">{{ organization.name }}</p>
+                      <p class="entity__meta">{{ organization.legalName }}</p>
+                    </div>
+                  </a>
+                </td>
+                <td>
+                  <span class="owner-name">{{ organization.owner.name }}</span>
+                  <small class="owner-email">{{ organization.owner.email }}</small>
+                </td>
+                <td>
+                  @if (organization.plan; as plan) {
+                    <span class="plan-name">{{ plan.name }}</span>
+                    <small class="plan-price"
+                      >{{
+                        plan.monthlyPrice | currency: plan.currency : 'symbol-narrow' : '1.0-0'
+                      }}/mes</small
+                    >
+                  } @else {
+                    <span class="text-subtle">Sin plan</span>
+                  }
+                </td>
+                <td>
+                  <div class="permission-count">
+                    <span
+                      >{{ organization.activePermissionCount }}/{{
+                        organization.totalPermissionCount
+                      }}</span
+                    >
+                    <div>
+                      <i
+                        [style.width.%]="
+                          (organization.activePermissionCount / organization.totalPermissionCount) *
+                          100
+                        "
+                      ></i>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span [class]="healthClass(organization)">{{ healthLabel(organization) }}</span>
+                </td>
+                <td>
+                  <span [class]="organization.isActive ? 'status' : 'status status--neutral'">
+                    {{ organization.isActive ? 'Activa' : 'Inactiva' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <a
+                      class="button button--secondary button--sm"
+                      [routerLink]="['/organizations', organization.id]"
+                      >Abrir</a
+                    >
+                    <button
+                      class="button button--sm"
+                      [class.button--danger]="organization.isActive"
+                      [class.button--secondary]="!organization.isActive"
+                      type="button"
+                      [disabled]="
+                        store.pendingAction() === 'organization-status:' + organization.id
+                      "
+                      (click)="toggleStatus(organization)"
+                    >
+                      @if (confirmingStatusId() === organization.id) {
+                        Confirmar
+                      } @else {
+                        {{ organization.isActive ? 'Desactivar' : 'Reactivar' }}
+                      }
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

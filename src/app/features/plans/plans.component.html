@@ -1,0 +1,116 @@
+<div class="page plans-page">
+  <header class="page-header">
+    <div class="page-header__copy">
+      <p class="eyebrow">Preparado para la siguiente fase</p>
+      <h1 class="page-title">Planes y precios</h1>
+      <p class="page-subtitle">
+        La estructura visual ya contempla planes, pricing y capacidades iniciales por organización.
+      </p>
+    </div>
+    <button
+      class="button"
+      type="button"
+      disabled
+      title="Disponible cuando exista el backend de planes"
+    >
+      <app-icon name="plans" />
+      Crear plan
+    </button>
+  </header>
+
+  <div class="notice notice--warning roadmap-notice">
+    <app-icon name="alert" />
+    <div>
+      <strong>Funcionalidad en preparación.</strong>
+      <span>
+        Estos datos son de referencia. La activación requiere persistencia de planes, suscripciones,
+        historial de precios y reglas de asignación en el backend.
+      </span>
+    </div>
+  </div>
+
+  @if (store.isLoading() && store.plans().length === 0) {
+    <div class="card loading-block"></div>
+  } @else {
+    <section class="plan-grid">
+      @for (plan of store.plans(); track plan.id; let index = $index) {
+        <article class="pricing-card card" [class.pricing-card--featured]="index === 1">
+          @if (index === 1) {
+            <span class="pricing-card__recommended">Referencia sugerida</span>
+          }
+          <div class="pricing-card__top">
+            <span class="pricing-card__icon"><app-icon name="plans" /></span>
+            <span class="status status--warning">Borrador</span>
+          </div>
+          <h2>{{ plan.name }}</h2>
+          <p>{{ plan.description }}</p>
+          <div class="pricing-card__price">
+            <strong>{{
+              plan.monthlyPrice | currency: plan.currency : 'symbol-narrow' : '1.0-0'
+            }}</strong>
+            <span>/ mes</span>
+          </div>
+          <dl>
+            <div>
+              <dt>Organizaciones</dt>
+              <dd>{{ plan.organizationCount }}</dd>
+            </div>
+            <div>
+              <dt>Capacidades incluidas</dt>
+              <dd>{{ plan.includedPermissionCount }}</dd>
+            </div>
+            <div>
+              <dt>Moneda</dt>
+              <dd>{{ plan.currency }}</dd>
+            </div>
+          </dl>
+          <button class="button button--secondary" type="button" disabled>Editar definición</button>
+        </article>
+      }
+    </section>
+  }
+
+  <section class="card readiness-card">
+    <header class="card__header">
+      <div>
+        <h2 class="card__title">Ruta de implementación</h2>
+        <p class="card__subtitle">Decisiones que quedan previstas antes de habilitar cobros</p>
+      </div>
+      <span class="readiness-badge">Arquitectura preparada</span>
+    </header>
+    <div class="readiness-steps">
+      <article class="readiness-step readiness-step--done">
+        <span><app-icon name="check" /></span>
+        <div>
+          <small>01 · Listo en UI</small>
+          <h3>Modelo de plan</h3>
+          <p>Nombre, precio, moneda, estado y conjunto de capacidades.</p>
+        </div>
+      </article>
+      <article class="readiness-step">
+        <span>02</span>
+        <div>
+          <small>Backend</small>
+          <h3>Persistencia y versionado</h3>
+          <p>Planes, precios históricos y asignaciones tenant-aware.</p>
+        </div>
+      </article>
+      <article class="readiness-step">
+        <span>03</span>
+        <div>
+          <small>Reglas</small>
+          <h3>Provisionamiento</h3>
+          <p>Crear organizaciones con los permisos definidos por su plan.</p>
+        </div>
+      </article>
+      <article class="readiness-step">
+        <span>04</span>
+        <div>
+          <small>Billing</small>
+          <h3>Suscripción y cobro</h3>
+          <p>Vigencia, renovaciones, impuestos y eventos de pago.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>

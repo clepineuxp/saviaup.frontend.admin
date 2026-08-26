@@ -1,0 +1,131 @@
+<div class="shell">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <a class="brand" routerLink="/dashboard" aria-label="Ir al resumen de SaviaUp Admin">
+      <img src="logo/Logo-72.png" alt="" width="38" height="38" />
+      <span class="brand__copy">
+        <strong>SaviaUp</strong>
+        <small>Administración</small>
+      </span>
+    </a>
+
+    <div class="environment-label">
+      <span class="environment-label__dot"></span>
+      Consola privada
+    </div>
+
+    <nav class="nav-list">
+      <p class="nav-list__label">Plataforma</p>
+      @for (item of navigation; track item.route) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        >
+          <app-icon [name]="item.icon" />
+          <span>{{ item.label }}</span>
+          @if (item.badge) {
+            <span class="nav-item__badge">{{ item.badge }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar__support">
+      <app-icon name="shield" />
+      <div>
+        <strong>Acceso de plataforma</strong>
+        <p>Las acciones quedan preparadas para auditoría.</p>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <span class="avatar">AS</span>
+      <div class="profile-card__copy">
+        <strong>{{ auth.session()?.administrator?.name }}</strong>
+        <span>{{ auth.session()?.administrator?.email }}</span>
+      </div>
+      <button
+        class="profile-card__logout"
+        type="button"
+        (click)="logout()"
+        aria-label="Cerrar sesión"
+      >
+        <app-icon name="logout" />
+      </button>
+    </div>
+  </aside>
+
+  <section class="shell__main">
+    <header class="topbar">
+      <button
+        class="icon-button topbar__menu"
+        type="button"
+        (click)="mobileMenuOpen.set(true)"
+        aria-label="Abrir menú"
+      >
+        <app-icon name="menu" />
+      </button>
+      <div class="topbar__context">
+        <span class="topbar__context-label">SaviaUp</span>
+        <strong>Centro de control</strong>
+      </div>
+      <div class="topbar__actions">
+        <span class="mode-badge"><span></span> Datos de demostración</span>
+        <button class="icon-button" type="button" aria-label="Notificaciones">
+          <app-icon name="bell" />
+          <span class="notification-dot"></span>
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </section>
+</div>
+
+@if (mobileMenuOpen()) {
+  <button
+    class="mobile-backdrop"
+    type="button"
+    aria-label="Cerrar menú"
+    (click)="closeMobileMenu()"
+  ></button>
+  <aside class="mobile-nav" aria-label="Navegación móvil">
+    <div class="mobile-nav__header">
+      <a class="brand" routerLink="/dashboard" (click)="closeMobileMenu()">
+        <img src="logo/Logo-72.png" alt="" width="38" height="38" />
+        <span class="brand__copy"><strong>SaviaUp</strong><small>Administración</small></span>
+      </a>
+      <button
+        class="icon-button"
+        type="button"
+        (click)="closeMobileMenu()"
+        aria-label="Cerrar menú"
+      >
+        <app-icon name="x" />
+      </button>
+    </div>
+    <nav class="nav-list">
+      @for (item of navigation; track item.route) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="nav-item--active"
+          (click)="closeMobileMenu()"
+        >
+          <app-icon [name]="item.icon" />
+          <span>{{ item.label }}</span>
+          @if (item.badge) {
+            <span class="nav-item__badge">{{ item.badge }}</span>
+          }
+        </a>
+      }
+    </nav>
+    <button class="button button--secondary mobile-nav__logout" type="button" (click)="logout()">
+      <app-icon name="logout" />
+      Cerrar sesión
+    </button>
+  </aside>
+}

@@ -1,0 +1,143 @@
+.records-count {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 0.65rem;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.filter-select {
+  min-width: 175px;
+}
+
+.membership-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: 330px;
+}
+
+.chip--inactive {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.last-access {
+  display: grid;
+  min-width: 82px;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+
+.last-access small {
+  margin-top: 0.12rem;
+  color: var(--subtle);
+  font-size: 0.64rem;
+}
+
+.actions-cell {
+  text-align: right;
+}
+
+.membership-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+
+.membership-card {
+  display: grid;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.82rem;
+  padding: 0.8rem;
+  background: var(--surface-soft);
+}
+
+.membership-card__main,
+.membership-card__action {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.membership-card__main div {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.membership-card__main strong {
+  color: var(--ink);
+  font-size: 0.79rem;
+}
+
+.membership-card__main span:not(.avatar) {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.membership-card__action {
+  justify-content: space-between;
+  padding-left: 3rem;
+}
+
+.membership-card__note {
+  margin: 0;
+  padding-left: 3rem;
+  color: var(--subtle);
+  font-size: 0.64rem;
+}
+
+.reassign-form {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.reassign-form .button {
+  grid-column: 1 / -1;
+}
+
+.security-action {
+  display: grid;
+  align-items: start;
+  gap: 0.75rem;
+  grid-template-columns: auto 1fr;
+}
+
+.security-action__icon {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.security-action .button {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .records-count {
+    display: none;
+  }
+
+  .reassign-form {
+    grid-template-columns: 1fr;
+  }
+
+  .membership-card__action {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-left: 0;
+  }
+
+  .membership-card__note {
+    padding-left: 0;
+  }
+}
