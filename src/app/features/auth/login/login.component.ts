@@ -15,11 +15,11 @@ export class LoginComponent {
   private readonly router = inject(Router);
   readonly auth = inject(AdminAuthStore);
   readonly form = new FormGroup({
-    email: new FormControl('admin@saviaup.local', {
+    email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
     }),
-    password: new FormControl('Savia123*', {
+    password: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
     }),

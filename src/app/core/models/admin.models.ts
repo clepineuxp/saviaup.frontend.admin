@@ -89,6 +89,8 @@ export interface OrganizationDetail extends OrganizationSummary {
   readonly city: string;
   readonly permissions: readonly TenantPermission[];
   readonly members: readonly OrganizationMember[];
+  readonly permissionSyncStatus: 'UNMANAGED' | 'PENDING' | 'SYNCED' | 'FAILED';
+  readonly lastPermissionsSyncAt: string | null;
 }
 
 export interface OperationIssue {
@@ -114,6 +116,7 @@ export interface OrganizationOperation {
 
 export interface PlatformPlan {
   readonly id: string;
+  readonly code: string;
   readonly name: string;
   readonly description: string;
   readonly monthlyPrice: number;
@@ -121,6 +124,51 @@ export interface PlatformPlan {
   readonly status: PlanStatus;
   readonly organizationCount: number;
   readonly includedPermissionCount: number;
+}
+
+export interface PlanPermissionOption {
+  readonly code: string;
+  readonly description: string;
+  readonly moduleCode: string;
+  readonly moduleName: string;
+}
+
+export interface PlanPriceHistory {
+  readonly id: string;
+  readonly monthlyPrice: number;
+  readonly currency: string;
+  readonly effectiveFrom: string;
+  readonly effectiveUntil: string | null;
+}
+
+export interface PlanDetail {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly description: string;
+  readonly monthlyPrice: number;
+  readonly currency: string;
+  readonly status: PlanStatus;
+  readonly permissionCodes: readonly string[];
+  readonly priceHistory: readonly PlanPriceHistory[];
+  readonly organizationCount: number;
+}
+
+export interface SavePlanRequest {
+  readonly code: string;
+  readonly name: string;
+  readonly description: string;
+  readonly monthlyPrice: number;
+  readonly currency: string;
+  readonly status: PlanStatus;
+  readonly permissionCodes: readonly string[];
+}
+
+export interface PlanAssignmentResult {
+  readonly organizationId: string;
+  readonly planId: string | null;
+  readonly syncStatus: 'PENDING' | 'SYNCED' | 'FAILED';
+  readonly lastSyncedAt: string | null;
 }
 
 export interface AuditEvent {

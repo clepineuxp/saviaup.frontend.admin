@@ -266,6 +266,38 @@
   color: #fff;
 }
 
+.plan-card__selector {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0 0.6rem;
+}
+
+.plan-card__selector span {
+  color: #9eb1a4;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.plan-card__selector select {
+  min-width: 0;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 0.65rem;
+  padding: 0.62rem;
+  background: #173527;
+  color: #fff;
+  font-size: 0.72rem;
+}
+
+.plan-card__link {
+  width: 100%;
+  border: 0;
+  padding: 0.7rem 0 0;
+  background: transparent;
+  color: #b9cabe;
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
 .owner-summary .card__body {
   display: flex;
   align-items: center;

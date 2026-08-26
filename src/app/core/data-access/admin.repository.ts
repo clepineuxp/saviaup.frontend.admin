@@ -6,9 +6,13 @@ import {
   OrganizationOperation,
   OrganizationSummary,
   PasswordResetResult,
+  PlanAssignmentResult,
+  PlanDetail,
+  PlanPermissionOption,
   PlatformPlan,
   PlatformUser,
   ReassignMembershipRequest,
+  SavePlanRequest,
 } from '../models/admin.models';
 
 export interface AdminRepository {
@@ -18,6 +22,16 @@ export interface AdminRepository {
   getOrganization(id: string): Observable<OrganizationDetail>;
   getOperations(): Observable<readonly OrganizationOperation[]>;
   getPlans(): Observable<readonly PlatformPlan[]>;
+  getPlan(id: string): Observable<PlanDetail>;
+  getPlanPermissionCatalog(): Observable<readonly PlanPermissionOption[]>;
+  createPlan(request: SavePlanRequest): Observable<PlanDetail>;
+  updatePlan(id: string, request: SavePlanRequest): Observable<PlanDetail>;
+  setPlanStatus(id: string, status: PlatformPlan['status']): Observable<PlanDetail>;
+  assignPlan(
+    organizationId: string,
+    planId: string,
+    preserveOverrides?: boolean,
+  ): Observable<PlanAssignmentResult>;
   setOrganizationStatus(id: string, isActive: boolean): Observable<OrganizationSummary>;
   setTenantPermission(
     organizationId: string,

@@ -193,16 +193,39 @@
               <div class="permission-progress">
                 <i
                   [style.width.%]="
-                    (organization.activePermissionCount / organization.totalPermissionCount) * 100
+                    permissionPercentage(
+                      organization.activePermissionCount,
+                      organization.totalPermissionCount
+                    )
                   "
                 ></i>
               </div>
+              <label class="plan-card__selector">
+                <span>Cambiar plan</span>
+                <select [value]="selectedPlanId()" (change)="onPlanChange($event)">
+                  <option value="">Selecciona un plan</option>
+                  @for (plan of store.plans(); track plan.id) {
+                    @if (plan.status === 'ACTIVE') {
+                      <option [value]="plan.id">{{ plan.name }} · {{ plan.code }}</option>
+                    }
+                  }
+                </select>
+              </label>
               <button
                 class="button button--secondary"
+                [class.button--danger]="planConfirmation()"
                 type="button"
-                (click)="setTab('PERMISSIONS')"
+                [disabled]="
+                  !selectedPlanId() ||
+                  selectedPlanId() === organization.plan?.id ||
+                  store.pendingAction() === 'assign-plan:' + organization.id
+                "
+                (click)="assignPlan()"
               >
-                Administrar permisos
+                {{ planConfirmation() ? 'Confirmar y reemplazar permisos' : 'Asignar plan' }}
+              </button>
+              <button class="plan-card__link" type="button" (click)="setTab('PERMISSIONS')">
+                Administrar excepciones de permisos
               </button>
             </article>
 

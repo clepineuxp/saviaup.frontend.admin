@@ -2,13 +2,12 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AdminSession } from '../models/admin.models';
 import { ADMIN_AUTH_REPOSITORY } from './admin-auth.repository';
-
-const SESSION_KEY = 'saviaup.admin.session';
+import { ADMIN_SESSION_KEY, readAdminSession } from './admin-session.storage';
 
 @Injectable({ providedIn: 'root' })
 export class AdminAuthStore {
   private readonly repository = inject(ADMIN_AUTH_REPOSITORY);
-  private readonly sessionState = signal<AdminSession | null>(this.restore());
+  private readonly sessionState = signal<AdminSession | null>(readAdminSession());
   private readonly loadingState = signal(false);
   private readonly errorState = signal<string | null>(null);
 
@@ -26,7 +25,7 @@ export class AdminAuthStore {
 
     try {
       const session = await firstValueFrom(this.repository.login(email, password));
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
       this.sessionState.set(session);
       return true;
     } catch {
@@ -38,24 +37,7 @@ export class AdminAuthStore {
   }
 
   logout(): void {
-    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
     this.sessionState.set(null);
-  }
-
-  private restore(): AdminSession | null {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-
-    try {
-      const parsed = JSON.parse(raw) as AdminSession;
-      if (new Date(parsed.expiresAt).getTime() <= Date.now()) {
-        sessionStorage.removeItem(SESSION_KEY);
-        return null;
-      }
-      return parsed;
-    } catch {
-      sessionStorage.removeItem(SESSION_KEY);
-      return null;
-    }
   }
 }

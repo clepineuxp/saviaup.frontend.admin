@@ -33,6 +33,8 @@ export class OrganizationDetailComponent implements OnInit {
   readonly tab = signal<OrganizationTab>('OVERVIEW');
   readonly selectedOwnerId = signal('');
   readonly ownerConfirmation = signal(false);
+  readonly selectedPlanId = signal('');
+  readonly planConfirmation = signal(false);
 
   readonly permissionGroups = computed<readonly PermissionGroup[]>(() => {
     const permissions = this.store.organization()?.permissions ?? [];
@@ -62,8 +64,17 @@ export class OrganizationDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) return;
-    void Promise.all([this.store.loadOrganization(id), this.store.loadOperations()]).then(() => {
+    void Promise.all([
+      this.store.loadOrganization(id),
+      this.store.loadOperations(),
+      this.store.loadPlans(),
+    ]).then(() => {
       this.selectedOwnerId.set(this.ownerCandidates()[0]?.userId ?? '');
+      this.selectedPlanId.set(
+        this.store.organization()?.plan?.id ??
+          this.store.plans().find((plan) => plan.status === 'ACTIVE')?.id ??
+          '',
+      );
     });
   }
 
@@ -88,8 +99,28 @@ export class OrganizationDetailComponent implements OnInit {
     this.ownerConfirmation.set(false);
   }
 
+  onPlanChange(event: Event): void {
+    this.selectedPlanId.set((event.target as HTMLSelectElement).value);
+    this.planConfirmation.set(false);
+  }
+
+  async assignPlan(): Promise<void> {
+    const planId = this.selectedPlanId();
+    if (!planId || planId === this.store.organization()?.plan?.id) return;
+    if (!this.planConfirmation()) {
+      this.planConfirmation.set(true);
+      return;
+    }
+    await this.store.assignPlan(planId);
+    this.planConfirmation.set(false);
+  }
+
   enabledCount(group: PermissionGroup): number {
     return group.permissions.filter(({ enabled }) => enabled).length;
+  }
+
+  permissionPercentage(active: number, total: number): number {
+    return total === 0 ? 0 : (active / total) * 100;
   }
 
   healthLabel(health: string): string {
