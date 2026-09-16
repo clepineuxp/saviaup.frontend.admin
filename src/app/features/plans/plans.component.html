@@ -1,49 +1,62 @@
 <div class="page plans-page">
   <header class="page-header">
     <div class="page-header__copy">
-      <p class="eyebrow">Preparado para la siguiente fase</p>
+      <p class="eyebrow">Gobierno comercial</p>
       <h1 class="page-title">Planes y precios</h1>
       <p class="page-subtitle">
-        La estructura visual ya contempla planes, pricing y capacidades iniciales por organización.
+        Define el precio y las capacidades que se materializan como permisos efectivos en cada
+        organización.
       </p>
     </div>
-    <button
-      class="button"
-      type="button"
-      disabled
-      title="Disponible cuando exista el backend de planes"
-    >
+    <button class="button" type="button" (click)="openCreate()">
       <app-icon name="plans" />
       Crear plan
     </button>
   </header>
 
+  @if (store.notice(); as notice) {
+    <div class="notice" [class.notice--error]="notice.tone === 'ERROR'" role="status">
+      <app-icon [name]="notice.tone === 'ERROR' ? 'alert' : 'check'" />
+      <span>{{ notice.message }}</span>
+    </div>
+  }
+
   <div class="notice notice--warning roadmap-notice">
-    <app-icon name="alert" />
+    <app-icon name="shield" />
     <div>
-      <strong>Funcionalidad en preparación.</strong>
+      <strong>Separación segura entre bases.</strong>
       <span>
-        Estos datos son de referencia. La activación requiere persistencia de planes, suscripciones,
-        historial de precios y reglas de asignación en el backend.
+        Los planes viven en la base administrativa. La plataforma operacional recibe únicamente el
+        conjunto final de permisos y nunca conoce el plan contratado.
       </span>
     </div>
   </div>
 
   @if (store.isLoading() && store.plans().length === 0) {
     <div class="card loading-block"></div>
+  } @else if (store.plans().length === 0) {
+    <section class="card empty-state">
+      <span class="empty-state__icon"><app-icon name="plans" /></span>
+      <h3>Aún no hay planes</h3>
+      <p>
+        Crea el primer plan y selecciona las capacidades con las que entrarán las organizaciones.
+      </p>
+      <button class="button" type="button" (click)="openCreate()">Crear primer plan</button>
+    </section>
   } @else {
     <section class="plan-grid">
-      @for (plan of store.plans(); track plan.id; let index = $index) {
-        <article class="pricing-card card" [class.pricing-card--featured]="index === 1">
-          @if (index === 1) {
-            <span class="pricing-card__recommended">Referencia sugerida</span>
-          }
+      @for (plan of store.plans(); track plan.id) {
+        <article
+          class="pricing-card card"
+          [class.pricing-card--featured]="plan.status === 'ACTIVE'"
+        >
           <div class="pricing-card__top">
             <span class="pricing-card__icon"><app-icon name="plans" /></span>
-            <span class="status status--warning">Borrador</span>
+            <span [class]="statusClass(plan.status)">{{ statusLabel(plan.status) }}</span>
           </div>
+          <span class="plan-code">{{ plan.code }}</span>
           <h2>{{ plan.name }}</h2>
-          <p>{{ plan.description }}</p>
+          <p>{{ plan.description || 'Sin descripción comercial.' }}</p>
           <div class="pricing-card__price">
             <strong>{{
               plan.monthlyPrice | currency: plan.currency : 'symbol-narrow' : '1.0-0'
@@ -64,53 +77,139 @@
               <dd>{{ plan.currency }}</dd>
             </div>
           </dl>
-          <button class="button button--secondary" type="button" disabled>Editar definición</button>
+          <div class="pricing-card__actions">
+            <button class="button button--secondary" type="button" (click)="openEdit(plan)">
+              Editar
+            </button>
+            @if (plan.status !== 'ARCHIVED') {
+              <button
+                class="button button--ghost"
+                type="button"
+                [disabled]="store.pendingAction() === 'plan-status:' + plan.id"
+                (click)="toggleStatus(plan)"
+              >
+                {{ plan.status === 'ACTIVE' ? 'Pasar a borrador' : 'Activar' }}
+              </button>
+            }
+          </div>
         </article>
       }
     </section>
   }
 
-  <section class="card readiness-card">
-    <header class="card__header">
-      <div>
-        <h2 class="card__title">Ruta de implementación</h2>
-        <p class="card__subtitle">Decisiones que quedan previstas antes de habilitar cobros</p>
-      </div>
-      <span class="readiness-badge">Arquitectura preparada</span>
-    </header>
-    <div class="readiness-steps">
-      <article class="readiness-step readiness-step--done">
-        <span><app-icon name="check" /></span>
+  @if (editorOpen()) {
+    <button
+      class="backdrop"
+      type="button"
+      aria-label="Cerrar editor"
+      (click)="closeEditor()"
+    ></button>
+    <aside class="drawer plan-editor" aria-labelledby="plan-editor-title">
+      <header class="drawer__header">
         <div>
-          <small>01 · Listo en UI</small>
-          <h3>Modelo de plan</h3>
-          <p>Nombre, precio, moneda, estado y conjunto de capacidades.</p>
+          <p class="eyebrow">{{ editingId() ? 'Editar definición' : 'Nueva definición' }}</p>
+          <h2 class="drawer__title" id="plan-editor-title">
+            {{ editingId() ? 'Configurar plan' : 'Crear plan' }}
+          </h2>
         </div>
-      </article>
-      <article class="readiness-step">
-        <span>02</span>
-        <div>
-          <small>Backend</small>
-          <h3>Persistencia y versionado</h3>
-          <p>Planes, precios históricos y asignaciones tenant-aware.</p>
+        <button class="icon-button" type="button" aria-label="Cerrar" (click)="closeEditor()">
+          <app-icon name="x" />
+        </button>
+      </header>
+
+      <form class="drawer__body" [formGroup]="form" id="plan-form" (ngSubmit)="save()">
+        <div class="plan-form-grid">
+          <label class="field">
+            <span class="field__label">Código estable</span>
+            <input class="field__input" formControlName="code" placeholder="STANDARD" />
+            <span class="field__hint">Mayúsculas, números, guion o guion bajo.</span>
+          </label>
+          <label class="field">
+            <span class="field__label">Estado</span>
+            <select class="field__input" formControlName="status">
+              <option value="DRAFT">Borrador</option>
+              <option value="ACTIVE">Activo</option>
+              <option value="ARCHIVED">Archivado</option>
+            </select>
+          </label>
+          <label class="field field--wide">
+            <span class="field__label">Nombre comercial</span>
+            <input class="field__input" formControlName="name" placeholder="Plan Standard" />
+          </label>
+          <label class="field field--wide">
+            <span class="field__label">Descripción</span>
+            <textarea class="field__input" rows="3" formControlName="description"></textarea>
+          </label>
+          <label class="field">
+            <span class="field__label">Precio mensual</span>
+            <input class="field__input" type="number" min="0" formControlName="monthlyPrice" />
+          </label>
+          <label class="field">
+            <span class="field__label">Moneda</span>
+            <input class="field__input" maxlength="3" formControlName="currency" />
+          </label>
         </div>
-      </article>
-      <article class="readiness-step">
-        <span>03</span>
-        <div>
-          <small>Reglas</small>
-          <h3>Provisionamiento</h3>
-          <p>Crear organizaciones con los permisos definidos por su plan.</p>
-        </div>
-      </article>
-      <article class="readiness-step">
-        <span>04</span>
-        <div>
-          <small>Billing</small>
-          <h3>Suscripción y cobro</h3>
-          <p>Vigencia, renovaciones, impuestos y eventos de pago.</p>
-        </div>
-      </article>
-    </div>
-  </section>
+
+        <section class="permission-selector">
+          <div>
+            <h3 class="section-title">Capacidades incluidas</h3>
+            <p class="section-copy">
+              {{ selectedPermissions().length }} permisos seleccionados. Al editar, las
+              organizaciones asignadas se vuelven a sincronizar.
+            </p>
+          </div>
+          @for (group of permissionGroups(); track group.code) {
+            <fieldset>
+              <legend>{{ group.name }}</legend>
+              <label class="permission-module-option">
+                <input
+                  type="checkbox"
+                  [checked]="isModuleSelected(group)"
+                  [indeterminate]="isModulePartiallySelected(group)"
+                  (change)="toggleModulePermissions(group, $any($event.target).checked)"
+                />
+                <span>
+                  <strong>Seleccionar todos los permisos del módulo</strong>
+                  <small>
+                    {{ selectedModulePermissionCount(group) }}/{{ group.permissions.length }}
+                    seleccionados
+                  </small>
+                </span>
+              </label>
+              @for (permission of group.permissions; track permission.code) {
+                <label class="permission-option">
+                  <input
+                    type="checkbox"
+                    [checked]="isPermissionSelected(permission.code)"
+                    (change)="togglePermission(permission.code, $any($event.target).checked)"
+                  />
+                  <span
+                    ><strong>{{ permission.code }}</strong
+                    ><small>{{ permission.description }}</small></span
+                  >
+                </label>
+              }
+            </fieldset>
+          }
+        </section>
+      </form>
+
+      <footer class="drawer__footer">
+        <button class="button button--secondary" type="button" (click)="closeEditor()">
+          Cancelar
+        </button>
+        <button
+          class="button"
+          type="submit"
+          form="plan-form"
+          [disabled]="
+            store.pendingAction() === 'plan-create' ||
+            store.pendingAction()?.startsWith('plan-update:')
+          "
+        >
+          {{ editingId() ? 'Guardar y sincronizar' : 'Crear plan' }}
+        </button>
+      </footer>
+    </aside>
+  }
 </div>

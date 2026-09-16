@@ -172,8 +172,11 @@
 
           <aside class="overview-aside">
             <article class="plan-card">
-              <div class="plan-card__label"><app-icon name="plans" /> Plan asignado</div>
-              <h2>{{ organization.plan?.name ?? 'Sin plan' }}</h2>
+              <div class="plan-card__label">
+                <app-icon [name]="organization.plan ? 'plans' : 'shield'" />
+                {{ organization.plan ? 'Plan asignado' : 'Gestión manual' }}
+              </div>
+              <h2>{{ organization.plan?.name ?? 'Permisos manuales' }}</h2>
               @if (organization.plan; as plan) {
                 <p>
                   <strong>{{
@@ -193,15 +196,44 @@
               <div class="permission-progress">
                 <i
                   [style.width.%]="
-                    (organization.activePermissionCount / organization.totalPermissionCount) * 100
+                    permissionPercentage(
+                      organization.activePermissionCount,
+                      organization.totalPermissionCount
+                    )
                   "
                 ></i>
               </div>
-              <button
-                class="button button--secondary"
-                type="button"
-                (click)="setTab('PERMISSIONS')"
-              >
+              @if (store.plans().length > 0) {
+                <label class="plan-card__selector">
+                  <span>Cambiar plan</span>
+                  <select [value]="selectedPlanId()" (change)="onPlanChange($event)">
+                    <option value="">Selecciona un plan</option>
+                    @for (plan of store.plans(); track plan.id) {
+                      @if (plan.status === 'ACTIVE') {
+                        <option [value]="plan.id">{{ plan.name }} · {{ plan.code }}</option>
+                      }
+                    }
+                  </select>
+                </label>
+                <button
+                  class="button button--secondary"
+                  [class.button--danger]="planConfirmation()"
+                  type="button"
+                  [disabled]="
+                    !selectedPlanId() ||
+                    selectedPlanId() === organization.plan?.id ||
+                    store.pendingAction() === 'assign-plan:' + organization.id
+                  "
+                  (click)="assignPlan()"
+                >
+                  {{ planConfirmation() ? 'Confirmar y reemplazar permisos' : 'Asignar plan' }}
+                </button>
+              } @else {
+                <p class="plan-card__manual-copy">
+                  No se requiere un plan. Administra directamente las capacidades del tenant.
+                </p>
+              }
+              <button class="plan-card__link" type="button" (click)="setTab('PERMISSIONS')">
                 Administrar permisos
               </button>
             </article>
@@ -226,10 +258,18 @@
         <section class="permissions-layout">
           <div class="notice notice--warning permission-warning">
             <app-icon name="shield" />
-            <span
-              ><strong>Límite de capacidades del tenant.</strong> Al deshabilitar un permiso, deja
-              de estar disponible para navegación, autorización y roles de esta organización.</span
-            >
+            @if (organization.plan) {
+              <span
+                ><strong>Permisos efectivos y excepciones del plan.</strong> Los cambios realizados
+                aquí tienen prioridad sobre la configuración del plan asignado.</span
+              >
+            } @else {
+              <span
+                ><strong>Gestión manual sin plan.</strong> Puedes habilitar o deshabilitar cualquier
+                permiso del tenant. Cada cambio se sincroniza directamente con la plataforma
+                operacional.</span
+              >
+            }
           </div>
           <div class="permission-groups">
             @for (group of permissionGroups(); track group.code) {

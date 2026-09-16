@@ -8,7 +8,11 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { OrganizationOperation } from '../../core/models/admin.models';
+import {
+  OperationIssue,
+  OrganizationOperation,
+  UpdateOperationStatusSettingsRequest,
+} from '../../core/models/admin.models';
 import { AdminStore } from '../../core/store/admin.store';
 import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
 
@@ -26,6 +30,12 @@ export class OperationComponent implements OnInit {
   readonly search = signal('');
   readonly filter = signal<OperationFilter>('ALL');
   readonly lastUpdatedAt = signal(new Date());
+  readonly settingsOpen = signal(false);
+  readonly inactivityRuleEnabled = signal(true);
+  readonly inactivityThresholdMinutes = signal(120);
+  readonly inactivitySeverity = signal<OperationIssue['severity']>('CRITICAL');
+  readonly cashRegisterRuleEnabled = signal(true);
+  readonly cashRegisterSeverity = signal<OperationIssue['severity']>('WARNING');
 
   readonly filteredOperations = computed(() => {
     const query = this.search().trim().toLowerCase();
@@ -52,7 +62,13 @@ export class OperationComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    void this.refresh();
+    void this.initialize();
+  }
+
+  async initialize(): Promise<void> {
+    await this.store.loadOperationStatusSettings();
+    this.hydrateSettings();
+    await this.refresh();
   }
 
   async refresh(): Promise<void> {
@@ -66,6 +82,50 @@ export class OperationComponent implements OnInit {
 
   setFilter(filter: OperationFilter): void {
     this.filter.set(filter);
+  }
+
+  toggleSettings(): void {
+    if (!this.settingsOpen()) this.hydrateSettings();
+    this.settingsOpen.update((value) => !value);
+  }
+
+  toggleInactivityRule(): void {
+    this.inactivityRuleEnabled.update((value) => !value);
+  }
+
+  toggleCashRegisterRule(): void {
+    this.cashRegisterRuleEnabled.update((value) => !value);
+  }
+
+  setInactivityThreshold(event: Event): void {
+    const value = Number((event.target as HTMLInputElement).value);
+    this.inactivityThresholdMinutes.set(Number.isFinite(value) ? Math.round(value) : 120);
+  }
+
+  setInactivitySeverity(event: Event): void {
+    this.inactivitySeverity.set(
+      (event.target as HTMLSelectElement).value as OperationIssue['severity'],
+    );
+  }
+
+  setCashRegisterSeverity(event: Event): void {
+    this.cashRegisterSeverity.set(
+      (event.target as HTMLSelectElement).value as OperationIssue['severity'],
+    );
+  }
+
+  async saveSettings(): Promise<void> {
+    const request: UpdateOperationStatusSettingsRequest = {
+      inactivityRuleEnabled: this.inactivityRuleEnabled(),
+      inactivityThresholdMinutes: Math.min(10080, Math.max(1, this.inactivityThresholdMinutes())),
+      inactivitySeverity: this.inactivitySeverity(),
+      cashRegisterRuleEnabled: this.cashRegisterRuleEnabled(),
+      cashRegisterSeverity: this.cashRegisterSeverity(),
+    };
+    this.inactivityThresholdMinutes.set(request.inactivityThresholdMinutes);
+    await this.store.saveOperationStatusSettings(request);
+    this.lastUpdatedAt.set(new Date());
+    this.settingsOpen.set(false);
   }
 
   healthLabel(item: OrganizationOperation): string {
@@ -87,5 +147,15 @@ export class OperationComponent implements OnInit {
 
   tableOccupancy(item: OrganizationOperation): number {
     return item.totalTables ? Math.round((item.occupiedTables / item.totalTables) * 100) : 0;
+  }
+
+  private hydrateSettings(): void {
+    const settings = this.store.operationSettings();
+    if (!settings) return;
+    this.inactivityRuleEnabled.set(settings.inactivityRuleEnabled);
+    this.inactivityThresholdMinutes.set(settings.inactivityThresholdMinutes);
+    this.inactivitySeverity.set(settings.inactivitySeverity);
+    this.cashRegisterRuleEnabled.set(settings.cashRegisterRuleEnabled);
+    this.cashRegisterSeverity.set(settings.cashRegisterSeverity);
   }
 }

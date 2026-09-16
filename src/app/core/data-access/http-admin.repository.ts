@@ -6,11 +6,17 @@ import {
   DashboardSnapshot,
   OrganizationDetail,
   OrganizationOperation,
+  OperationStatusSettings,
   OrganizationSummary,
   PasswordResetResult,
+  PlanAssignmentResult,
+  PlanDetail,
+  PlanPermissionOption,
   PlatformPlan,
   PlatformUser,
   ReassignMembershipRequest,
+  SavePlanRequest,
+  UpdateOperationStatusSettingsRequest,
 } from '../models/admin.models';
 import { AdminRepository } from './admin.repository';
 
@@ -39,8 +45,51 @@ export class HttpAdminRepository implements AdminRepository {
     return this.http.get<readonly OrganizationOperation[]>(`${this.baseUrl}/operations`);
   }
 
+  getOperationStatusSettings(): Observable<OperationStatusSettings> {
+    return this.http.get<OperationStatusSettings>(`${this.baseUrl}/operations/settings`);
+  }
+
+  updateOperationStatusSettings(
+    request: UpdateOperationStatusSettingsRequest,
+  ): Observable<OperationStatusSettings> {
+    return this.http.put<OperationStatusSettings>(`${this.baseUrl}/operations/settings`, request);
+  }
+
   getPlans(): Observable<readonly PlatformPlan[]> {
     return this.http.get<readonly PlatformPlan[]>(`${this.baseUrl}/plans`);
+  }
+
+  getPlan(id: string): Observable<PlanDetail> {
+    return this.http.get<PlanDetail>(`${this.baseUrl}/plans/${id}`);
+  }
+
+  getPlanPermissionCatalog(): Observable<readonly PlanPermissionOption[]> {
+    return this.http.get<readonly PlanPermissionOption[]>(
+      `${this.baseUrl}/plans/permissions/catalog`,
+    );
+  }
+
+  createPlan(request: SavePlanRequest): Observable<PlanDetail> {
+    return this.http.post<PlanDetail>(`${this.baseUrl}/plans`, request);
+  }
+
+  updatePlan(id: string, request: SavePlanRequest): Observable<PlanDetail> {
+    return this.http.put<PlanDetail>(`${this.baseUrl}/plans/${id}`, request);
+  }
+
+  setPlanStatus(id: string, status: PlatformPlan['status']): Observable<PlanDetail> {
+    return this.http.patch<PlanDetail>(`${this.baseUrl}/plans/${id}/status`, { status });
+  }
+
+  assignPlan(
+    organizationId: string,
+    planId: string,
+    preserveOverrides = false,
+  ): Observable<PlanAssignmentResult> {
+    return this.http.put<PlanAssignmentResult>(
+      `${this.baseUrl}/organizations/${organizationId}/plan`,
+      { planId, preserveOverrides },
+    );
   }
 
   setOrganizationStatus(id: string, isActive: boolean): Observable<OrganizationSummary> {

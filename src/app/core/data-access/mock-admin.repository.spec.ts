@@ -43,4 +43,21 @@ describe('MockAdminRepository', () => {
       ),
     ).rejects.toThrow('ADMIN_OWNER_CANNOT_BE_REASSIGNED');
   });
+
+  it('updates every operational status rule parameter', async () => {
+    const updated = await firstValueFrom(
+      repository.updateOperationStatusSettings({
+        inactivityRuleEnabled: true,
+        inactivityThresholdMinutes: 45,
+        inactivitySeverity: 'WARNING',
+        cashRegisterRuleEnabled: false,
+        cashRegisterSeverity: 'CRITICAL',
+      }),
+    );
+
+    expect(updated.inactivityThresholdMinutes).toBe(45);
+    expect(updated.inactivitySeverity).toBe('WARNING');
+    expect(updated.cashRegisterRuleEnabled).toBe(false);
+    expect(updated.cashRegisterSeverity).toBe('CRITICAL');
+  });
 });

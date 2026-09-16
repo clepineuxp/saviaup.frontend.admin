@@ -117,12 +117,7 @@
                       }}</span
                     >
                     <div>
-                      <i
-                        [style.width.%]="
-                          (organization.activePermissionCount / organization.totalPermissionCount) *
-                          100
-                        "
-                      ></i>
+                      <i [style.width.%]="permissionPercentage(organization)"></i>
                     </div>
                   </div>
                 </td>

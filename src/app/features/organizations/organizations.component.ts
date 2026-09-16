@@ -83,6 +83,12 @@ export class OrganizationsComponent implements OnInit {
     return 'status';
   }
 
+  permissionPercentage(organization: OrganizationSummary): number {
+    return organization.totalPermissionCount === 0
+      ? 0
+      : (organization.activePermissionCount / organization.totalPermissionCount) * 100;
+  }
+
   async toggleStatus(organization: OrganizationSummary): Promise<void> {
     if (this.confirmingStatusId() !== organization.id) {
       this.confirmingStatusId.set(organization.id);

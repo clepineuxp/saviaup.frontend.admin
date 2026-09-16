@@ -1,14 +1,20 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
   DashboardSnapshot,
   OrganizationDetail,
   OrganizationOperation,
+  OperationStatusSettings,
   OrganizationMember,
   OrganizationSummary,
+  PlanDetail,
+  PlanPermissionOption,
   PlatformPlan,
   PlatformUser,
   ReassignMembershipRequest,
+  SavePlanRequest,
+  UpdateOperationStatusSettingsRequest,
 } from '../models/admin.models';
 import { ADMIN_REPOSITORY } from '../data-access/admin.repository';
 
@@ -25,7 +31,10 @@ export class AdminStore {
   private readonly organizationsState = signal<readonly OrganizationSummary[]>([]);
   private readonly organizationState = signal<OrganizationDetail | null>(null);
   private readonly operationsState = signal<readonly OrganizationOperation[]>([]);
+  private readonly operationSettingsState = signal<OperationStatusSettings | null>(null);
   private readonly plansState = signal<readonly PlatformPlan[]>([]);
+  private readonly planDetailState = signal<PlanDetail | null>(null);
+  private readonly planPermissionCatalogState = signal<readonly PlanPermissionOption[]>([]);
   private readonly loadingState = signal(false);
   private readonly pendingActionState = signal<string | null>(null);
   private readonly errorState = signal<string | null>(null);
@@ -36,7 +45,10 @@ export class AdminStore {
   readonly organizations = this.organizationsState.asReadonly();
   readonly organization = this.organizationState.asReadonly();
   readonly operations = this.operationsState.asReadonly();
+  readonly operationSettings = this.operationSettingsState.asReadonly();
   readonly plans = this.plansState.asReadonly();
+  readonly planDetail = this.planDetailState.asReadonly();
+  readonly planPermissionCatalog = this.planPermissionCatalogState.asReadonly();
   readonly isLoading = this.loadingState.asReadonly();
   readonly pendingAction = this.pendingActionState.asReadonly();
   readonly error = this.errorState.asReadonly();
@@ -69,8 +81,87 @@ export class AdminStore {
     await this.load(() => firstValueFrom(this.repository.getOperations()), this.operationsState);
   }
 
+  async loadOperationStatusSettings(): Promise<void> {
+    await this.load(
+      () => firstValueFrom(this.repository.getOperationStatusSettings()),
+      this.operationSettingsState,
+    );
+  }
+
+  async saveOperationStatusSettings(request: UpdateOperationStatusSettingsRequest): Promise<void> {
+    await this.action(
+      'operation-settings',
+      async () => {
+        const settings = await firstValueFrom(
+          this.repository.updateOperationStatusSettings(request),
+        );
+        this.operationSettingsState.set(settings);
+        this.operationsState.set(await firstValueFrom(this.repository.getOperations()));
+      },
+      'Las reglas de estado operacional fueron actualizadas.',
+    );
+  }
+
   async loadPlans(): Promise<void> {
     await this.load(() => firstValueFrom(this.repository.getPlans()), this.plansState);
+  }
+
+  async loadPlan(id: string): Promise<void> {
+    this.planDetailState.set(null);
+    await this.load(() => firstValueFrom(this.repository.getPlan(id)), this.planDetailState);
+  }
+
+  async loadPlanPermissionCatalog(): Promise<void> {
+    await this.load(
+      () => firstValueFrom(this.repository.getPlanPermissionCatalog()),
+      this.planPermissionCatalogState,
+    );
+  }
+
+  clearPlanDetail(): void {
+    this.planDetailState.set(null);
+  }
+
+  async savePlan(request: SavePlanRequest, id?: string): Promise<void> {
+    await this.action(
+      id ? `plan-update:${id}` : 'plan-create',
+      async () => {
+        const saved = await firstValueFrom(
+          id ? this.repository.updatePlan(id, request) : this.repository.createPlan(request),
+        );
+        this.planDetailState.set(saved);
+        await this.loadPlans();
+      },
+      id
+        ? 'El plan fue actualizado y sus organizaciones quedaron sincronizadas.'
+        : 'El plan fue creado.',
+    );
+  }
+
+  async setPlanStatus(plan: PlatformPlan, status: PlatformPlan['status']): Promise<void> {
+    await this.action(
+      `plan-status:${plan.id}`,
+      async () => {
+        await firstValueFrom(this.repository.setPlanStatus(plan.id, status));
+        await this.loadPlans();
+      },
+      `El plan quedó en estado ${status === 'ACTIVE' ? 'activo' : status === 'DRAFT' ? 'borrador' : 'archivado'}.`,
+    );
+  }
+
+  async assignPlan(planId: string): Promise<void> {
+    const organization = this.organizationState();
+    if (!organization) return;
+    await this.action(
+      `assign-plan:${organization.id}`,
+      async () => {
+        await firstValueFrom(this.repository.assignPlan(organization.id, planId));
+        this.organizationState.set(
+          await firstValueFrom(this.repository.getOrganization(organization.id)),
+        );
+      },
+      'El plan fue asignado y los permisos efectivos quedaron sincronizados.',
+    );
   }
 
   async setOrganizationStatus(organization: OrganizationSummary): Promise<void> {
@@ -221,12 +312,23 @@ export class AdminStore {
   }
 
   private mapActionError(error: unknown): string {
-    const code = error instanceof Error ? error.message : '';
+    const code =
+      error instanceof HttpErrorResponse
+        ? ((error.error as { error?: { code?: string } } | null)?.error?.code ?? '')
+        : error instanceof Error
+          ? error.message
+          : '';
     const messages: Record<string, string> = {
       ADMIN_OWNER_CANNOT_BE_DISABLED: 'No se puede deshabilitar al owner de la organización.',
       ADMIN_OWNER_CANNOT_BE_REASSIGNED: 'Primero debes transferir la propiedad de la organización.',
       ADMIN_MEMBERSHIP_ALREADY_EXISTS: 'El usuario ya pertenece a la organización de destino.',
       ADMIN_OWNER_MUST_BE_ACTIVE_MEMBER: 'El nuevo owner debe ser un miembro activo.',
+      ADMIN_PERMISSION_SYNC_FAILED:
+        'La configuración fue guardada, pero la sincronización operacional falló. Puedes reintentarla.',
+      ADMIN_PERMISSION_NOT_FOUND: 'El plan contiene una capacidad que ya no existe.',
+      ADMIN_PLAN_CODE_EXISTS: 'Ya existe un plan con ese código.',
+      ADMIN_PLAN_IN_USE: 'No se puede archivar un plan que tiene organizaciones asignadas.',
+      ADMIN_PLAN_NOT_ACTIVE: 'Solo puedes asignar un plan que esté activo.',
     };
     return messages[code] ?? 'No fue posible completar la operación.';
   }

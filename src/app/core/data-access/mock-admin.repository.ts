@@ -6,16 +6,31 @@ import {
   OrganizationDetail,
   OrganizationMember,
   OrganizationOperation,
+  OperationStatusSettings,
   OrganizationSummary,
   PasswordResetResult,
+  PlanAssignmentResult,
+  PlanDetail,
+  PlanPermissionOption,
   PlatformPlan,
   PlatformUser,
   ReassignMembershipRequest,
+  SavePlanRequest,
   TenantPermission,
+  UpdateOperationStatusSettingsRequest,
 } from '../models/admin.models';
 import { AdminRepository } from './admin.repository';
 
 const RESPONSE_DELAY = 220;
+
+let OPERATION_STATUS_SETTINGS: OperationStatusSettings = {
+  inactivityRuleEnabled: true,
+  inactivityThresholdMinutes: 120,
+  inactivitySeverity: 'CRITICAL',
+  cashRegisterRuleEnabled: true,
+  cashRegisterSeverity: 'WARNING',
+  updatedAt: null,
+};
 
 const PERMISSIONS: readonly Omit<TenantPermission, 'enabled'>[] = [
   {
@@ -181,9 +196,10 @@ const PERMISSIONS: readonly Omit<TenantPermission, 'enabled'>[] = [
   },
 ];
 
-const PLANS: PlatformPlan[] = [
+let PLANS: PlatformPlan[] = [
   {
     id: 'plan-starter',
+    code: 'ESSENTIAL',
     name: 'Esencial',
     description: 'Operación principal para restaurantes que están comenzando.',
     monthlyPrice: 89000,
@@ -194,6 +210,7 @@ const PLANS: PlatformPlan[] = [
   },
   {
     id: 'plan-growth',
+    code: 'GROWTH',
     name: 'Crecimiento',
     description: 'Inventario, reportes y gestión avanzada para equipos en expansión.',
     monthlyPrice: 169000,
@@ -204,6 +221,7 @@ const PLANS: PlatformPlan[] = [
   },
   {
     id: 'plan-pro',
+    code: 'PROFESSIONAL',
     name: 'Profesional',
     description: 'Todas las capacidades de SaviaUp y acompañamiento prioritario.',
     monthlyPrice: 269000,
@@ -643,8 +661,115 @@ export class MockAdminRepository implements AdminRepository {
     return this.respond(OPERATIONS);
   }
 
+  getOperationStatusSettings(): Observable<OperationStatusSettings> {
+    return this.respond(OPERATION_STATUS_SETTINGS);
+  }
+
+  updateOperationStatusSettings(
+    request: UpdateOperationStatusSettingsRequest,
+  ): Observable<OperationStatusSettings> {
+    OPERATION_STATUS_SETTINGS = {
+      ...request,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.respond(OPERATION_STATUS_SETTINGS);
+  }
+
   getPlans(): Observable<readonly PlatformPlan[]> {
     return this.respond(PLANS);
+  }
+
+  getPlan(id: string): Observable<PlanDetail> {
+    const plan = PLANS.find((item) => item.id === id);
+    if (!plan) return this.fail('ADMIN_PLAN_NOT_FOUND');
+    return this.respond(this.planDetail(plan));
+  }
+
+  getPlanPermissionCatalog(): Observable<readonly PlanPermissionOption[]> {
+    return this.respond(
+      PERMISSIONS.map((item) => ({
+        code: item.code,
+        description: item.description,
+        moduleCode: item.groupCode,
+        moduleName: item.groupName,
+      })),
+    );
+  }
+
+  createPlan(request: SavePlanRequest): Observable<PlanDetail> {
+    const plan: PlatformPlan = {
+      id: `plan-${Date.now()}`,
+      code: request.code,
+      name: request.name,
+      description: request.description,
+      monthlyPrice: request.monthlyPrice,
+      currency: request.currency,
+      status: request.status,
+      organizationCount: 0,
+      includedPermissionCount: request.permissionCodes.length,
+    };
+    PLANS = [...PLANS, plan];
+    return this.respond(this.planDetail(plan, request.permissionCodes));
+  }
+
+  updatePlan(id: string, request: SavePlanRequest): Observable<PlanDetail> {
+    const existing = PLANS.find((item) => item.id === id);
+    if (!existing) return this.fail('ADMIN_PLAN_NOT_FOUND');
+    const updated: PlatformPlan = {
+      ...existing,
+      code: request.code,
+      name: request.name,
+      description: request.description,
+      monthlyPrice: request.monthlyPrice,
+      currency: request.currency,
+      status: request.status,
+      includedPermissionCount: request.permissionCodes.length,
+    };
+    PLANS = PLANS.map((item) => (item.id === id ? updated : item));
+    return this.respond(this.planDetail(updated, request.permissionCodes));
+  }
+
+  setPlanStatus(id: string, status: PlatformPlan['status']): Observable<PlanDetail> {
+    const existing = PLANS.find((item) => item.id === id);
+    if (!existing) return this.fail('ADMIN_PLAN_NOT_FOUND');
+    const updated = { ...existing, status };
+    PLANS = PLANS.map((item) => (item.id === id ? updated : item));
+    return this.respond(this.planDetail(updated));
+  }
+
+  assignPlan(
+    organizationId: string,
+    planId: string,
+    preserveOverrides = false,
+  ): Observable<PlanAssignmentResult> {
+    const plan = PLANS.find((item) => item.id === planId);
+    const organization = ORGANIZATIONS.find((item) => item.id === organizationId);
+    if (!plan || !organization) return this.fail('ADMIN_PLAN_ASSIGNMENT_INVALID');
+    ORGANIZATIONS = ORGANIZATIONS.map((item) =>
+      item.id === organizationId
+        ? {
+            ...item,
+            plan: {
+              id: plan.id,
+              name: plan.name,
+              monthlyPrice: plan.monthlyPrice,
+              currency: plan.currency,
+            },
+          }
+        : item,
+    );
+    if (!preserveOverrides) {
+      PERMISSIONS_BY_ORGANIZATION.set(
+        organizationId,
+        new Set(PERMISSIONS.slice(0, plan.includedPermissionCount).map((item) => item.code)),
+      );
+    }
+    return this.respond({
+      organizationId,
+      planId,
+      syncStatus: 'SYNCED',
+      lastSyncedAt: new Date().toISOString(),
+    });
   }
 
   setOrganizationStatus(id: string, isActive: boolean): Observable<OrganizationSummary> {
@@ -827,6 +952,29 @@ export class MockAdminRepository implements AdminRepository {
         enabled: enabledCodes.has(permission.code),
       })),
       members,
+      permissionSyncStatus: 'SYNCED',
+      lastPermissionsSyncAt: new Date().toISOString(),
+    };
+  }
+
+  private planDetail(
+    plan: PlatformPlan,
+    permissionCodes: readonly string[] = PERMISSIONS.slice(0, plan.includedPermissionCount).map(
+      (item) => item.code,
+    ),
+  ): PlanDetail {
+    return {
+      ...plan,
+      permissionCodes,
+      priceHistory: [
+        {
+          id: `price-${plan.id}`,
+          monthlyPrice: plan.monthlyPrice,
+          currency: plan.currency,
+          effectiveFrom: '2026-01-01T00:00:00Z',
+          effectiveUntil: null,
+        },
+      ],
     };
   }
 
