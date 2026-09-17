@@ -142,6 +142,41 @@ textarea.field__input {
   font-size: 0.72rem;
   font-weight: 800;
 }
+.permission-module-option {
+  display: grid;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.3rem;
+  border: 1px solid var(--savia-200);
+  border-radius: 0.6rem;
+  padding: 0.65rem;
+  background: var(--savia-50);
+  grid-template-columns: auto 1fr;
+  cursor: pointer;
+}
+.permission-module-option input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--savia-600);
+}
+.permission-module-option span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.permission-module-option strong {
+  color: var(--ink-soft);
+  font-size: 0.69rem;
+}
+.permission-module-option small {
+  color: var(--savia-700);
+  font-size: 0.63rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .permission-option {
   display: grid;
   align-items: start;
@@ -191,5 +226,10 @@ textarea.field__input {
   }
   .field--wide {
     grid-column: auto;
+  }
+  .permission-module-option span {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.15rem;
   }
 }

@@ -127,8 +127,34 @@ export class PlansComponent implements OnInit {
     this.selectedPermissions.set([...current].sort());
   }
 
+  toggleModulePermissions(group: PermissionGroup, checked: boolean): void {
+    const current = new Set(this.selectedPermissions());
+    for (const permission of group.permissions) {
+      if (checked) current.add(permission.code);
+      else current.delete(permission.code);
+    }
+    this.selectedPermissions.set([...current].sort());
+  }
+
   isPermissionSelected(code: string): boolean {
     return this.selectedPermissions().includes(code);
+  }
+
+  selectedModulePermissionCount(group: PermissionGroup): number {
+    const selected = new Set(this.selectedPermissions());
+    return group.permissions.filter((permission) => selected.has(permission.code)).length;
+  }
+
+  isModuleSelected(group: PermissionGroup): boolean {
+    return (
+      group.permissions.length > 0 &&
+      this.selectedModulePermissionCount(group) === group.permissions.length
+    );
+  }
+
+  isModulePartiallySelected(group: PermissionGroup): boolean {
+    const selectedCount = this.selectedModulePermissionCount(group);
+    return selectedCount > 0 && selectedCount < group.permissions.length;
   }
 
   async save(): Promise<void> {

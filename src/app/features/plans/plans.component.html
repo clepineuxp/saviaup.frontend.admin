@@ -161,6 +161,21 @@
           @for (group of permissionGroups(); track group.code) {
             <fieldset>
               <legend>{{ group.name }}</legend>
+              <label class="permission-module-option">
+                <input
+                  type="checkbox"
+                  [checked]="isModuleSelected(group)"
+                  [indeterminate]="isModulePartiallySelected(group)"
+                  (change)="toggleModulePermissions(group, $any($event.target).checked)"
+                />
+                <span>
+                  <strong>Seleccionar todos los permisos del módulo</strong>
+                  <small>
+                    {{ selectedModulePermissionCount(group) }}/{{ group.permissions.length }}
+                    seleccionados
+                  </small>
+                </span>
+              </label>
               @for (permission of group.permissions; track permission.code) {
                 <label class="permission-option">
                   <input
